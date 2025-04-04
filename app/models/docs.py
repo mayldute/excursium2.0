@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, Text, Enum
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.session import Base
@@ -19,10 +19,10 @@ class ExtraService(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    description = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
     price = Column(Integer, nullable=False)
 
     order_id = Column(Integer, ForeignKey("orders.id"))
-    order = relationship("Order", back_populates="extraservice", uselist=True)
+    order = relationship("Order", back_populates="extra_services")
 
     

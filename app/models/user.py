@@ -17,7 +17,7 @@ class User(Base):
     is_staff = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     is_subscribed = Column(Boolean, default=False)
-    date_joined = Column(DateTime, default=func.now)
+    date_joined = Column(DateTime, default=func.now())
     photo = Column(String, nullable=True)
     hashed_password = Column(String(255), nullable=False)
 
@@ -40,10 +40,10 @@ class Client(Base):
     oktmo = Column(String(11), nullable=True)
     address = Column(String(255), nullable=True)
 
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
     user = relationship("User", back_populates="client", uselist=False)
-    comment = relationship("Comment", back_populates="comment", uselist=True)
-    order = relationship("Order", back_populates="client", uselist=False)
+    comments = relationship("Comment", back_populates="client", uselist=True)
+    orders = relationship("Order", back_populates="client", uselist=True)
 
 class Carrier(Base):
     __tablename__ = "carriers"
@@ -61,9 +61,9 @@ class Carrier(Base):
     address = Column(String(255), nullable=True)
     rating = Column(Integer, default=0)
 
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
     user = relationship("User", back_populates="carrier", uselist=False)
     docs = relationship("Docs", back_populates="carrier", uselist=True)
-    transport = relationship("Transport", back_populates="carrier", uselist=True)
-    comment = relationship("Comment", back_populates="carrier", uselist=False)
-    order = relationship("Order", back_populates="carrier", uselist=False)
+    transports = relationship("Transport", back_populates="carrier", uselist=True)
+    comments = relationship("Comment", back_populates="carrier", uselist=True)
+    orders = relationship("Order", back_populates="carrier", uselist=True)

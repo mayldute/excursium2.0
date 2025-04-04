@@ -23,11 +23,11 @@ class Transport(Base):
     rating = Column(Integer, default=0)
 
     carrier_id = Column(Integer, ForeignKey("carriers.id"))
-    carrier = relationship("Carrier", back_populates="transport", uselist=True)
+    carrier = relationship("Carrier", back_populates="transports")
     route_id = Column(Integer, ForeignKey("routes.id"))
-    route = relationship("Route", back_populates="transport", uselist=True)
-    scheduale = relationship("Scheduale", back_populates="transport", uselist=True)
-    order = relationship("Order", back_populates="transport", uselist=False)
+    route = relationship("Route", back_populates="transports")
+    orders = relationship("Order", back_populates="transport", uselist=True)
+    schedules = relationship("Schedule", back_populates="transport", uselist=True)
 
 class Route(Base):
     __tablename__ = 'routes'
@@ -36,10 +36,10 @@ class Route(Base):
     id_from = Column(Integer, ForeignKey("cities.id"), nullable=False)
     id_to = Column(Integer, ForeignKey("cities.id"), nullable=False)
 
-    from_city = relationship("City", back_populates="routes_from", foreign_keys=[id_from])
-    to_city = relationship("City", back_populates="routes_to", foreign_keys=[id_to])
-    transport = relationship("Transport", back_populates="route", uselist=True)
-    order = relationship("Order", back_populates="route", uselist=True)
+    from_city = relationship("Cities", back_populates="routes_from", foreign_keys=[id_from])
+    to_city = relationship("Cities", back_populates="routes_to", foreign_keys=[id_to])
+    transports = relationship("Transport", back_populates="route", uselist=True)
+    orders = relationship("Order", back_populates="route", uselist=True)
 
 class Schedule(Base):
     __tablename__ = 'schedules'
@@ -49,6 +49,7 @@ class Schedule(Base):
     trip_end = Column(DateTime)
 
     id_transport = Column(Integer, ForeignKey('transports.id'))
-    transport = relationship("Transport", back_populates="scheduale", uselist=True)
+    transport = relationship("Transport", back_populates="schedules")
+
 
 

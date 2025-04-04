@@ -10,4 +10,6 @@ __all__ = [
     "Transport", "Schedule",
     "Cities", "Route",
     "Docs", "ExtraService", 
+    "ClientTypeEnum", "LegalTypeEnum",
+    "DocTypeEnum", "OrderStatus", "PassengerType"
 ]
