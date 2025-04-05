@@ -1,16 +1,16 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
-from models.enums import OrderStatus, PassengerType
+from app.models.enums import OrderStatusEnum, PassenderTypeEnum
 from app.db.session import Base
 
 class Order(Base):
     __tablename__ = 'orders'
 
     id = Column(Integer, primary_key=True, index=True)
-    status = Column(Enum(OrderStatus), nullable=False)
+    status = Column(Enum(OrderStatusEnum), nullable=False)
     created_at = Column(DateTime, default=func.now())
-    passenger_type = Column(Enum(PassengerType), nullable=False)
+    passenger_type = Column(Enum(PassenderTypeEnum), nullable=False)
     notification_sent = Column(Boolean, default=False)
     payment_status = Column(String(50), nullable=False)
     payment_method = Column(String(50), nullable=False)
