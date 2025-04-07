@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from sqlalchemy import ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, func
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
+from app.models.order import Comment
 from app.db.session import Base
 
 class Transport(Base):
@@ -19,15 +20,23 @@ class Transport(Base):
     tv = Column(Boolean, default=False)
     air_conditioning = Column(Boolean, default=False)
     toilet = Column(Boolean, default=False)
-    price = Column(Integer)
-    rating = Column(Integer, default=0)
+    rating = Column(Float, default=0.0)
 
-    carrier_id = Column(Integer, ForeignKey("carriers.id"))
+    carrier_id = Column(Integer, ForeignKey("carriers.id", ondelete="CASCADE"))
     carrier = relationship("Carrier", back_populates="transports")
-    route_id = Column(Integer, ForeignKey("routes.id"))
-    route = relationship("Route", back_populates="transports")
-    orders = relationship("Order", back_populates="transport", uselist=True)
-    schedules = relationship("Schedule", back_populates="transport", uselist=True)
+    orders = relationship("Order", back_populates="transport", lazy='dynamic', uselist=True)
+    schedules = relationship("Schedule", back_populates="transport", lazy='dynamic', uselist=True)
+
+    @staticmethod
+    def update_transport_rating(db, transport_id: int):
+        avg_rating = db.query(func.avg(Comment.rating))\
+            .filter(Comment.transport_id == transport_id)\
+            .scalar()
+
+        transport = db.query(Transport).get(transport_id)
+        transport.rating = round(avg_rating or 0.0, 1)
+
+        db.commit()
 
 class Route(Base):
     __tablename__ = 'routes'
@@ -38,8 +47,13 @@ class Route(Base):
 
     from_city = relationship("Cities", back_populates="routes_from", foreign_keys=[id_from])
     to_city = relationship("Cities", back_populates="routes_to", foreign_keys=[id_to])
-    transports = relationship("Transport", back_populates="route", uselist=True)
-    orders = relationship("Order", back_populates="route", uselist=True)
+    transports = relationship("Transport", back_populates="route", lazy='dynamic', uselist=True)
+    orders = relationship("Order", back_populates="route", lazy='dynamic', uselist=True)
+    schedules = relationship("Schedule", back_populates="route", lazy='dynamic', uselist=True)
+
+    __table_args__ = (
+        UniqueConstraint("id_from", "id_to", name="uq_route_from_to"),
+    )
 
 class Schedule(Base):
     __tablename__ = 'schedules'
@@ -47,9 +61,12 @@ class Schedule(Base):
     id = Column(Integer, primary_key=True, index=True)
     trip_start = Column(DateTime)
     trip_end = Column(DateTime)
+    price = Column(Integer, nullable=True)
+    accepts_orders = Column(Boolean, default=True)
 
-    id_transport = Column(Integer, ForeignKey('transports.id'))
+    id_transport = Column(Integer, ForeignKey('transports.id', ondelete="CASCADE"))
     transport = relationship("Transport", back_populates="schedules")
-
+    route_id = Column(Integer, ForeignKey("routes.id", ondelete="CASCADE"))
+    route = relationship("Route", back_populates="schedules")
 
 

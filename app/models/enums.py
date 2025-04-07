@@ -36,3 +36,8 @@ class PassenderTypeEnum(str, enum.Enum):
     ADULT = "ADULT" #Adult
     MIXED = "MIXED" #Mixed
     CORPORATE = "CORPORATE" #Corporate
+
+class PaymentMethodEnum(str, enum.Enum):
+    CARD = "CARD" #Card
+    TRANSFER = "TRANSFER" #Transfer
+    OTHER = "OTHER" #Apple Pay / Google Pay / SBP for individuals

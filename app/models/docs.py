@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Enum
+from sqlalchemy import Column, Integer, String, Text, Enum, Boolean
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.session import Base
@@ -11,7 +11,7 @@ class Docs(Base):
     doc_type = Column(Enum(DocTypeEnum), nullable=False)
     file_path = Column(String, nullable=False)
 
-    carrier_id = Column(Integer, ForeignKey("carriers.id"))
+    carrier_id = Column(Integer, ForeignKey("carriers.id", ondelete="CASCADE"))
     carrier = relationship("Carrier", back_populates="docs")
 
 class ExtraService(Base):
@@ -21,8 +21,9 @@ class ExtraService(Base):
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     price = Column(Integer, nullable=False)
+    is_active = Column(Boolean, default=True)
 
-    order_id = Column(Integer, ForeignKey("orders.id"))
+    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"))
     order = relationship("Order", back_populates="extra_services")
 
     
