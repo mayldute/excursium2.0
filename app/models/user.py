@@ -5,8 +5,6 @@ from app.models.enums import ClientTypeEnum, LegalTypeEnum
 from app.models.order import Comment
 from app.db.session import Base
 
-
-
 class User(Base):
     __tablename__ = "users"
 

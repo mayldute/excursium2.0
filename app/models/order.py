@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
-from app.models.enums import OrderStatusEnum, PassenderTypeEnum, PaymentMethodEnum
+from app.models.enums import OrderStatusEnum, PassenderTypeEnum, PaymentMethodEnum, PaymentStatusEnum
 from app.db.session import Base
 
 class Order(Base):
@@ -12,7 +12,7 @@ class Order(Base):
     created_at = Column(DateTime, default=func.now())
     passenger_type = Column(Enum(PassenderTypeEnum), nullable=False)
     notification_sent = Column(Boolean, default=False)
-    payment_status = Column(Boolean, default=False)
+    payment_status = Column(Enum(PaymentStatusEnum), nullable=False)
     payment_method = Column(Enum(PaymentMethodEnum), nullable=False)
     price = Column(Integer, nullable=False)
 
@@ -57,6 +57,8 @@ class Comment(Base):
     order = relationship("Order", back_populates="comment", uselist=False)
     carrier_id = Column(Integer, ForeignKey("carriers.id", ondelete="CASCADE"))
     carrier = relationship("Carrier", back_populates="comments")
+    transport_id = Column(Integer, ForeignKey("transports.id", ondelete="CASCADE"))
+    transport = relationship("Transport", back_populates="comments")
     
 
 

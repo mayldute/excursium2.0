@@ -26,6 +26,9 @@ class Transport(Base):
     carrier = relationship("Carrier", back_populates="transports")
     orders = relationship("Order", back_populates="transport", lazy='dynamic', uselist=True)
     schedules = relationship("Schedule", back_populates="transport", lazy='dynamic', uselist=True)
+    route_id = Column(Integer, ForeignKey("routes.id", ondelete="CASCADE"))
+    route = relationship("Route", back_populates="transports")
+    comments = relationship("Comment", back_populates="transport", lazy='dynamic', uselist=True)
 
     @staticmethod
     def update_transport_rating(db, transport_id: int):
