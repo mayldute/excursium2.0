@@ -29,6 +29,7 @@ class Transport(Base):
     route_id = Column(Integer, ForeignKey("routes.id", ondelete="CASCADE"))
     route = relationship("Route", back_populates="transports")
     comments = relationship("Comment", back_populates="transport", lazy='dynamic', uselist=True)
+    transport_routes = relationship("TransportRoute", back_populates="transport")
 
     @staticmethod
     def update_transport_rating(db, transport_id: int):
@@ -53,10 +54,24 @@ class Route(Base):
     transports = relationship("Transport", back_populates="route", lazy='dynamic', uselist=True)
     orders = relationship("Order", back_populates="route", lazy='dynamic', uselist=True)
     schedules = relationship("Schedule", back_populates="route", lazy='dynamic', uselist=True)
+    transport_routes = relationship("TransportRoute", back_populates="route")
+
 
     __table_args__ = (
         UniqueConstraint("id_from", "id_to", name="uq_route_from_to"),
     )
+
+class TransportRoute(Base): 
+    __tablename__ = 'transport_routes'
+
+    id = Column(Integer, primary_key=True, index=True)
+    min_price = Column(Float)
+    max_price = Column(Float)
+
+    route_id = Column(Integer, ForeignKey('routes.id', ondelete="CASCADE"))
+    transport_id = Column(Integer, ForeignKey('transports.id', ondelete="CASCADE"))
+    route = relationship("Route", back_populates="transport_routes")
+    transport = relationship("Transport", back_populates="transport_routes")
 
 class Schedule(Base):
     __tablename__ = 'schedules'
@@ -64,7 +79,6 @@ class Schedule(Base):
     id = Column(Integer, primary_key=True, index=True)
     trip_start = Column(DateTime)
     trip_end = Column(DateTime)
-    price = Column(Integer, nullable=True)
     accepts_orders = Column(Boolean, default=True)
 
     id_transport = Column(Integer, ForeignKey('transports.id', ondelete="CASCADE"))

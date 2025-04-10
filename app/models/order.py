@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, Float
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from app.models.enums import OrderStatusEnum, PassenderTypeEnum, PaymentMethodEnum, PaymentStatusEnum
@@ -14,7 +14,7 @@ class Order(Base):
     notification_sent = Column(Boolean, default=False)
     payment_status = Column(Enum(PaymentStatusEnum), nullable=False)
     payment_method = Column(Enum(PaymentMethodEnum), nullable=False)
-    price = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)
 
     comment = relationship("Comment", back_populates="order", uselist=False)
     extra_services = relationship("ExtraService", back_populates="order", lazy='dynamic', uselist=True)
