@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 from app.models import User 
 
+
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = "HS256"
 
@@ -38,3 +39,4 @@ def get_tokens_for_user(user: User) -> dict:
         "refresh_token": refresh_token,
         "token_type": "bearer"
     }
+
