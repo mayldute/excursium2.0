@@ -13,7 +13,7 @@ class User(Base):
     last_name = Column(String(255))
     middle_name = Column(String(255), nullable=True)
     email = Column(String, unique=True, index=True)
-    phone_number = Column(String(15), unique=True, index=True)
+    phone_number = Column(String(16), unique=True, index=True)
     is_staff = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     is_subscribed = Column(Boolean, default=False)
@@ -50,6 +50,7 @@ class Carrier(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     carrier_type = Column(Enum(LegalTypeEnum), nullable=True)
+    custom_type = Column(String(255), nullable=True)
     company_name = Column(String(255), nullable=False)
     inn = Column(String(12), nullable=True, index=True)
     kpp = Column(String(9), nullable=True)
