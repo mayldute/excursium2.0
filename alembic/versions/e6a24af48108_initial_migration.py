@@ -1,8 +1,8 @@
-"""database
+"""Initial migration
 
-Revision ID: 8fc71d8f8f17
-Revises: 
-Create Date: 2025-04-05 09:43:36.531713
+Revision ID: e6a24af48108
+Revises: 74d1d1f20506
+Create Date: 2025-05-10 14:07:01.752092
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8fc71d8f8f17'
-down_revision: Union[str, None] = None
+revision: str = 'e6a24af48108'
+down_revision: Union[str, None] = '74d1d1f20506'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -28,6 +28,13 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_cities_id'), 'cities', ['id'], unique=False)
+    op.create_table('newsletters',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('header', sa.String(length=255), nullable=True),
+    sa.Column('text', sa.Text(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_newsletters_id'), 'newsletters', ['id'], unique=False)
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('first_name', sa.String(length=255), nullable=True),
@@ -41,11 +48,11 @@ def upgrade() -> None:
     sa.Column('date_joined', sa.DateTime(), nullable=True),
     sa.Column('photo', sa.String(), nullable=True),
     sa.Column('hashed_password', sa.String(length=255), nullable=False),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('phone_number')
+    sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
+    op.create_index(op.f('ix_users_phone_number'), 'users', ['phone_number'], unique=True)
     op.create_table('carriers',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('carrier_type', sa.Enum('GP', 'LP', 'EC', 'PJC', 'NJC', 'LLC', 'IE', 'UE', 'FD', 'EST', 'OTH', name='legaltypeenum'), nullable=True),
@@ -58,13 +65,14 @@ def upgrade() -> None:
     sa.Column('bik', sa.String(length=9), nullable=True),
     sa.Column('oktmo', sa.String(length=11), nullable=True),
     sa.Column('address', sa.String(length=255), nullable=True),
-    sa.Column('rating', sa.Integer(), nullable=True),
+    sa.Column('rating', sa.Float(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id')
     )
     op.create_index(op.f('ix_carriers_id'), 'carriers', ['id'], unique=False)
+    op.create_index(op.f('ix_carriers_inn'), 'carriers', ['inn'], unique=False)
     op.create_table('clients',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('client_type', sa.Enum('IND', 'LEG', name='clienttypeenum'), nullable=False),
@@ -79,18 +87,20 @@ def upgrade() -> None:
     sa.Column('oktmo', sa.String(length=11), nullable=True),
     sa.Column('address', sa.String(length=255), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id')
     )
     op.create_index(op.f('ix_clients_id'), 'clients', ['id'], unique=False)
+    op.create_index(op.f('ix_clients_inn'), 'clients', ['inn'], unique=False)
     op.create_table('routes',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('id_from', sa.Integer(), nullable=False),
     sa.Column('id_to', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['id_from'], ['cities.id'], ),
     sa.ForeignKeyConstraint(['id_to'], ['cities.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('id_from', 'id_to', name='uq_route_from_to')
     )
     op.create_index(op.f('ix_routes_id'), 'routes', ['id'], unique=False)
     op.create_table('docs',
@@ -98,7 +108,7 @@ def upgrade() -> None:
     sa.Column('doc_type', sa.Enum('LC', 'ME', 'IS', 'CT', name='doctypeenum'), nullable=False),
     sa.Column('file_path', sa.String(), nullable=False),
     sa.Column('carrier_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['carrier_id'], ['carriers.id'], ),
+    sa.ForeignKeyConstraint(['carrier_id'], ['carriers.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_docs_id'), 'docs', ['id'], unique=False)
@@ -116,12 +126,11 @@ def upgrade() -> None:
     sa.Column('tv', sa.Boolean(), nullable=True),
     sa.Column('air_conditioning', sa.Boolean(), nullable=True),
     sa.Column('toilet', sa.Boolean(), nullable=True),
-    sa.Column('price', sa.Integer(), nullable=True),
-    sa.Column('rating', sa.Integer(), nullable=True),
+    sa.Column('rating', sa.Float(), nullable=True),
     sa.Column('carrier_id', sa.Integer(), nullable=True),
     sa.Column('route_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['carrier_id'], ['carriers.id'], ),
-    sa.ForeignKeyConstraint(['route_id'], ['routes.id'], ),
+    sa.ForeignKeyConstraint(['carrier_id'], ['carriers.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['route_id'], ['routes.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
@@ -130,19 +139,19 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('status', sa.Enum('NEW', 'CONFIRMD', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'ARCHIVED', name='orderstatusenum'), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('passenger_type', sa.Enum('CHILDREN', 'ADULT', 'MIXED', 'CORPORATE', name='passendertypeenum'), nullable=False),
+    sa.Column('passenger_type', sa.Enum('CHILDREN', 'ADULT', 'MIXED', 'CORPORATE', name='passengertypeenum'), nullable=False),
     sa.Column('notification_sent', sa.Boolean(), nullable=True),
-    sa.Column('payment_status', sa.String(length=50), nullable=False),
-    sa.Column('payment_method', sa.String(length=50), nullable=False),
+    sa.Column('payment_status', sa.Enum('PENDING', 'PAID', 'FAILED', name='paymentstatusenum'), nullable=False),
+    sa.Column('payment_method', sa.Enum('CARD', 'TRANSFER', 'OTHER', name='paymentmethodenum'), nullable=False),
     sa.Column('price', sa.Integer(), nullable=False),
     sa.Column('id_client', sa.Integer(), nullable=True),
     sa.Column('id_carrier', sa.Integer(), nullable=True),
     sa.Column('id_transport', sa.Integer(), nullable=True),
     sa.Column('id_route', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['id_carrier'], ['carriers.id'], ),
-    sa.ForeignKeyConstraint(['id_client'], ['clients.id'], ),
-    sa.ForeignKeyConstraint(['id_route'], ['routes.id'], ),
-    sa.ForeignKeyConstraint(['id_transport'], ['transports.id'], ),
+    sa.ForeignKeyConstraint(['id_carrier'], ['carriers.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['id_client'], ['clients.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['id_route'], ['routes.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['id_transport'], ['transports.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_orders_id'), 'orders', ['id'], unique=False)
@@ -150,8 +159,12 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('trip_start', sa.DateTime(), nullable=True),
     sa.Column('trip_end', sa.DateTime(), nullable=True),
+    sa.Column('price', sa.Integer(), nullable=True),
+    sa.Column('accepts_orders', sa.Boolean(), nullable=True),
     sa.Column('id_transport', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['id_transport'], ['transports.id'], ),
+    sa.Column('route_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['id_transport'], ['transports.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['route_id'], ['routes.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_schedules_id'), 'schedules', ['id'], unique=False)
@@ -164,9 +177,11 @@ def upgrade() -> None:
     sa.Column('client_id', sa.Integer(), nullable=True),
     sa.Column('order_id', sa.Integer(), nullable=True),
     sa.Column('carrier_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['carrier_id'], ['carriers.id'], ),
-    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
-    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ),
+    sa.Column('transport_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['carrier_id'], ['carriers.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['transport_id'], ['transports.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_comments_id'), 'comments', ['id'], unique=False)
@@ -175,17 +190,33 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('price', sa.Integer(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('order_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ),
+    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_extra_services_id'), 'extra_services', ['id'], unique=False)
+    op.create_table('order_history',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('order_id', sa.Integer(), nullable=False),
+    sa.Column('old_status', sa.Enum('NEW', 'CONFIRMD', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'ARCHIVED', name='orderstatusenum'), nullable=True),
+    sa.Column('new_status', sa.Enum('NEW', 'CONFIRMD', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'ARCHIVED', name='orderstatusenum'), nullable=False),
+    sa.Column('changed_at', sa.DateTime(), nullable=True),
+    sa.Column('changed_by_user_id', sa.Integer(), nullable=True),
+    sa.Column('comment', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['changed_by_user_id'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_order_history_id'), 'order_history', ['id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_order_history_id'), table_name='order_history')
+    op.drop_table('order_history')
     op.drop_index(op.f('ix_extra_services_id'), table_name='extra_services')
     op.drop_table('extra_services')
     op.drop_index(op.f('ix_comments_id'), table_name='comments')
@@ -200,12 +231,18 @@ def downgrade() -> None:
     op.drop_table('docs')
     op.drop_index(op.f('ix_routes_id'), table_name='routes')
     op.drop_table('routes')
+    op.drop_index(op.f('ix_clients_inn'), table_name='clients')
     op.drop_index(op.f('ix_clients_id'), table_name='clients')
     op.drop_table('clients')
+    op.drop_index(op.f('ix_carriers_inn'), table_name='carriers')
     op.drop_index(op.f('ix_carriers_id'), table_name='carriers')
     op.drop_table('carriers')
+    op.drop_index(op.f('ix_users_phone_number'), table_name='users')
     op.drop_index(op.f('ix_users_id'), table_name='users')
+    op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
+    op.drop_index(op.f('ix_newsletters_id'), table_name='newsletters')
+    op.drop_table('newsletters')
     op.drop_index(op.f('ix_cities_id'), table_name='cities')
     op.drop_table('cities')
     # ### end Alembic commands ###

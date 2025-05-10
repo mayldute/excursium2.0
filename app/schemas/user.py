@@ -11,27 +11,27 @@ PhoneNumberStr = Annotated[
     )
 ]
 
-PasswordStr = Annotated[
-    str,
-    StringConstraints(
-        pattern=r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$',
-        min_length=8,
-        max_length=128
-    )
-]
-
 class UserCreate(BaseModel):
-    first_name: str
-    last_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     middle_name: Optional[str] = None
     email: EmailStr
-    phone_number: PhoneNumberStr
-    password1: PasswordStr
-    password2: PasswordStr
+    phone_number: Optional[PhoneNumberStr] = None
+    password1: str
+    password2: str
 
     @model_validator(mode="before")
-    def check_passwords_match(cls, values):
+    def check_passwords(cls, values):
+        password = values.get("password1")
+        if not any(c.islower() for c in password):
+            raise ValueError("Password must contain at least one lowercase letter.")
+        if not any(c.isupper() for c in password):
+            raise ValueError("Password must contain at least one uppercase letter.")
+        if not any(c.isdigit() for c in password):
+            raise ValueError("Password must contain at least one digit.")
+    
         if values.get("password1") != values.get("password2"):
             raise ValueError("Passwords do not match")
+
         return values
     

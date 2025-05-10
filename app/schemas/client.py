@@ -29,6 +29,7 @@ class ClientCreate(BaseModel):
         elif client_type == "LEG":
             required_fields = ["company_name", "inn", "kpp", "legal_type"]
             missing = [f for f in required_fields if not values.get(f)]
+            
             if missing:
                 raise ValueError(f"Missing fields for legal entity: {missing}")
 

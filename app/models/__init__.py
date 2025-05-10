@@ -4,7 +4,7 @@ from .transport import Transport, Schedule
 from .city import Cities, Route
 from .docs import Docs, ExtraService
 from .newsletter import Newsletter
-from .enums import ClientTypeEnum, LegalTypeEnum, DocTypeEnum, OrderStatus, PassengerType, PaymentMethodEnum, PaymentStatusEnum
+from .enums import ClientTypeEnum, LegalTypeEnum, DocTypeEnum, OrderStatusEnum, PassengerTypeEnum, PaymentMethodEnum, PaymentStatusEnum
 
 __all__ = [
     "User", "Client", "Carrier",
@@ -12,8 +12,8 @@ __all__ = [
     "Transport", "Schedule",
     "Cities", "Route",
     "Docs", "ExtraService", 
-    "ClientTypeEnum", "LegalTypeEnum",
-    "DocTypeEnum", "OrderStatus", "PassengerType"
+    "ClientTypeEnum", "LegalTypeEnum", 
+    "DocTypeEnum", "OrderStatusEnum", "PassengerTypeEnum"
     "PaymentMethodEnum", "PaymentStatusEnum", "OrderHistory",
     "Newsletter",
 ]

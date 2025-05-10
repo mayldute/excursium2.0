@@ -31,7 +31,7 @@ class OrderStatusEnum(str, enum.Enum):
     REJECTED = "REJECTED" #Rejected
     ARCHIVED = "ARCHIVED" #Archived
 
-class PassenderTypeEnum(str, enum.Enum):
+class PassengerTypeEnum(str, enum.Enum):
     CHILDREN = "CHILDREN" #Children
     ADULT = "ADULT" #Adult
     MIXED = "MIXED" #Mixed

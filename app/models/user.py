@@ -3,7 +3,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from app.models.enums import ClientTypeEnum, LegalTypeEnum
 from app.models.order import Comment
-from app.db.session import Base
+from app.db.base import Base
 
 class User(Base):
     __tablename__ = "users"
