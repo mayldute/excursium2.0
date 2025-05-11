@@ -3,6 +3,9 @@ import os
 from datetime import datetime, timedelta
 from app.models import User 
 
+from fastapi import HTTPException
+from jose import JWTError
+
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = "HS256"
