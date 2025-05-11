@@ -40,7 +40,7 @@ async def register_client_service(payload: ClientCreate, db: AsyncSession, reque
     db.add(client)
     await db.commit()
 
-    tokens = get_tokens_for_user(new_user)
+    tokens = await get_tokens_for_user(new_user, db)
 
     return {
         "user": {

@@ -40,7 +40,7 @@ async def register_carrier_service(payload: CarrierCreate, db: AsyncSession, req
     db.add(carrier)
     await db.commit()
 
-    tokens = get_tokens_for_user(new_user)
+    tokens = await get_tokens_for_user(new_user, db)
 
     return {
         "user": {
