@@ -2,13 +2,17 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.user import UserLogin, Token, PasswordChangeRequest
 from app.dependencies.get_db import get_db
-from app.services.user import authenticate_user, logout_user, change_user_password, refresh_user_token
+from app.services.user import activate_user_by_token, authenticate_user, logout_user, change_user_password, refresh_user_token
 from app.models import User
 from app.dependencies.user import get_current_user
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 router = APIRouter(prefix="/auth", tags=["[auth] user"])
 oauth2_scheme = HTTPBearer()
+
+@router.get("/activate", summary="Activate user account via link")
+async def activate_user(token: str, db: AsyncSession = Depends(get_db)):
+    return await activate_user_by_token(token, db)
 
 @router.post("/login", summary="User login", response_model=Token)
 async def login(

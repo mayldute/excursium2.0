@@ -4,7 +4,8 @@ from sqlalchemy.future import select
 from app.models import User, Carrier
 from app.schemas.carrier import CarrierCreate
 from app.utils.security import hash_password
-from app.utils.tokens import get_tokens_for_user
+from app.utils.tokens import create_activation_token
+from app.utils.email import send_email
 
 async def register_carrier_service(payload: CarrierCreate, db: AsyncSession, request: Request):
     user_data = payload.user
@@ -40,12 +41,16 @@ async def register_carrier_service(payload: CarrierCreate, db: AsyncSession, req
     db.add(carrier)
     await db.commit()
 
-    tokens = await get_tokens_for_user(new_user, db)
+    activation_token = create_activation_token(new_user.id)
+    activation_link = f"https://your-frontend.com/activate?token={activation_token}"
+
+    await send_email(
+        to=new_user.email,
+        subject="Activate your account",
+        body=f"Click to activate: {activation_link}"
+    )
 
     return {
-        "user": {
-            "id": new_user.id,
-            "email": new_user.email
-        },
-        "tokens": tokens
+        "message": "Registration successful. Please check your email to activate your account.",
+        "activation_link": activation_link   #Delete after testing
     }
