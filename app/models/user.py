@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, Float
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
+from datetime import datetime, timezone
 from app.models.enums import ClientTypeEnum, LegalTypeEnum
 from app.models.order import Comment
 from app.db.base import Base
@@ -17,12 +18,13 @@ class User(Base):
     is_staff = Column(Boolean, default=False)
     is_active = Column(Boolean, default=False)
     is_subscribed = Column(Boolean, default=False)
-    date_joined = Column(DateTime, default=func.now())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     photo = Column(String, nullable=True)
     hashed_password = Column(String(255), nullable=False)
 
-    client = relationship("Client", back_populates="user", uselist=False)
-    carrier = relationship("Carrier", back_populates="user", uselist=False)
+    client = relationship("Client", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    carrier = relationship("Carrier", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    refresh_token = relationship("RefreshToken", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 class Client(Base):
     __tablename__ = "clients"
@@ -44,7 +46,6 @@ class Client(Base):
     user = relationship("User", back_populates="client", uselist=False)
     comments = relationship("Comment", back_populates="client", lazy='dynamic', uselist=True)
     orders = relationship("Order", back_populates="client", lazy='dynamic', uselist=True)
-    refresh_token = relationship("RefreshToken", back_populates="user", uselist=False)
 
 class Carrier(Base):
     __tablename__ = "carriers"
