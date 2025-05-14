@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, func
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.models.order import Comment
-from app.db.session import Base
+from app.db.base import Base
 
 class Transport(Base):
     __tablename__ = 'transports'

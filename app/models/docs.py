@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, Enum, Boolean
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
-from app.db.session import Base
+from app.db.base import Base
 from app.models.enums import DocTypeEnum
 
 class Docs(Base):
