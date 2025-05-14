@@ -1,6 +1,7 @@
 alembic==1.15.2
 annotated-types==0.7.0
 anyio==4.9.0
+APScheduler==3.11.0
 asyncpg==0.30.0
 bcrypt==4.0.1
 click==8.1.8
@@ -29,4 +30,5 @@ SQLAlchemy==2.0.40
 starlette==0.46.1
 typing_extensions==4.13.0
 typing-inspection==0.4.0
+tzlocal==5.3.1
 uvicorn==0.34.0
