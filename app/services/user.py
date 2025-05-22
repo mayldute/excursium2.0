@@ -135,7 +135,6 @@ async def refresh_user_token(refresh_token: str, db: AsyncSession) -> dict:
 
     Raises:
         HTTPException: If the token is invalid (401), expired (401), or the user is not found (404).
-        JWTError: If token decoding fails.
     """
     # Decode and validate refresh token
     try:
@@ -176,7 +175,6 @@ async def activate_user_by_token(token: str, db: AsyncSession) -> dict:
 
     Raises:
         HTTPException: If the token is invalid (400), expired (400), or the user is not found (404).
-        JWTError: If token decoding fails.
     """
     # Decode and validate activation token
     try:
@@ -250,7 +248,6 @@ async def change_user_email_service(user: User, new_email: EmailStr, db: AsyncSe
 
     Raises:
         HTTPException: If the new email is already in use (400).
-        RuntimeError: If email sending or token creation fails.
     """
     # Check if new email is already in use
     result = await db.execute(select(User).where(User.email == new_email))
@@ -300,7 +297,6 @@ async def confirm_email_change(token: str, db: AsyncSession) -> dict:
 
     Raises:
         HTTPException: If the token is invalid (404), expired (403), or email mismatch occurs (400).
-        JWTError: If token decoding fails.
     """
     # Fetch email change record
     result = await db.execute(select(ChangeEmail).where(ChangeEmail.token == token))

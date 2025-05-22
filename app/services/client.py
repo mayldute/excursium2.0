@@ -43,7 +43,6 @@ async def register_client_service(payload: ClientCreate, db: AsyncSession) -> di
 
     Raises:
         HTTPException: If a user with the provided email already exists (status code 409).
-        RuntimeError: If email sending fails or token creation encounters an error.
     """
     user_data = payload.user
 
