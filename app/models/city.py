@@ -1,17 +1,21 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import relationship
-from app.models.transport import Route
-from app.db.base import Base
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-class Cities(Base):
+from app.db.base import Base
+from app.models.transport import Route
+
+class City(Base):
     __tablename__ = 'cities'
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    region = Column(String(255), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    region: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    routes_from = relationship("Route", back_populates="from_city", foreign_keys=[Route.id_from])
-    routes_to = relationship("Route", back_populates="to_city", foreign_keys=[Route.id_to])
-
+    routes_from: Mapped[list["Route"]] = relationship(
+        "Route", back_populates="from_city", foreign_keys=[Route.id_from]
+    )
+    routes_to: Mapped[list["Route"]] = relationship(
+        "Route", back_populates="to_city", foreign_keys=[Route.id_to]
+    )
 
 

@@ -1,64 +1,70 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum
+from sqlalchemy import Integer, String, Boolean, DateTime, func, Enum
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
-from app.models.enums import OrderStatusEnum, PassengerTypeEnum, PaymentMethodEnum, PaymentStatusEnum
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.base import Base
+
+from app.models.enums import (
+    OrderStatusEnum, 
+    PassengerTypeEnum, 
+    PaymentMethodEnum, 
+    PaymentStatusEnum
+)
 
 class Order(Base):
     __tablename__ = 'orders'
 
-    id = Column(Integer, primary_key=True, index=True)
-    status = Column(Enum(OrderStatusEnum), nullable=False)
-    created_at = Column(DateTime, default=func.now())
-    passenger_type = Column(Enum(PassengerTypeEnum), nullable=False)
-    notification_sent = Column(Boolean, default=False)
-    payment_status = Column(Enum(PaymentStatusEnum), nullable=False)
-    payment_method = Column(Enum(PaymentMethodEnum), nullable=False)
-    price = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    status: Mapped[OrderStatusEnum] = mapped_column(Enum(OrderStatusEnum), nullable=False)
+    created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
+    passenger_type: Mapped[PassengerTypeEnum] = mapped_column(Enum(PassengerTypeEnum), nullable=False)
+    notification_sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    payment_status: Mapped[PaymentStatusEnum] = mapped_column(Enum(PaymentStatusEnum), nullable=False)
+    payment_method: Mapped[PaymentMethodEnum] = mapped_column(Enum(PaymentMethodEnum), nullable=False)
+    price: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    comment = relationship("Comment", back_populates="order", uselist=False)
-    extra_services = relationship("ExtraService", back_populates="order", lazy='dynamic', uselist=True)
-    id_client = Column(Integer, ForeignKey("clients.id", ondelete="CASCADE"))
-    client = relationship("Client", back_populates="orders")
-    id_carrier = Column(Integer, ForeignKey("carriers.id", ondelete="CASCADE"))
-    carrier = relationship("Carrier", back_populates="orders")
-    id_transport = Column(Integer, ForeignKey("transports.id", ondelete="CASCADE"))
-    transport = relationship("Transport", back_populates="orders")
-    id_route = Column(Integer, ForeignKey("routes.id", ondelete="CASCADE"))
-    route = relationship("Route", back_populates="orders")
-    history = relationship("OrderHistory", back_populates="order", cascade="all, delete-orphan", lazy='dynamic')
+    comment: Mapped["Comment"] = relationship("Comment", back_populates="order", uselist=False)
+    extra_services: Mapped[list["ExtraService"]] = relationship("ExtraService", back_populates="order", lazy='dynamic', uselist=True)
+    id_client: Mapped[int] = mapped_column(Integer, ForeignKey("clients.id", ondelete="CASCADE"))
+    client: Mapped["Client"] = relationship("Client", back_populates="orders")
+    id_carrier: Mapped[int] = mapped_column(Integer, ForeignKey("carriers.id", ondelete="CASCADE"))
+    carrier: Mapped["Carrier"] = relationship("Carrier", back_populates="orders")
+    id_transport: Mapped[int] = mapped_column(Integer, ForeignKey("transports.id", ondelete="CASCADE"))
+    transport: Mapped["Transport"] = relationship("Transport", back_populates="orders")
+    id_route: Mapped[int] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"))
+    route: Mapped["Route"] = relationship("Route", back_populates="orders")
+    history: Mapped[list["OrderHistory"]] = relationship("OrderHistory", back_populates="order", cascade="all, delete-orphan", lazy='dynamic')
 
 class OrderHistory(Base):
     __tablename__ = "order_history"
 
-    id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
-    old_status = Column(Enum(OrderStatusEnum), nullable=True)
-    new_status = Column(Enum(OrderStatusEnum), nullable=False)
-    changed_at = Column(DateTime, default=func.now())
-    changed_by_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    comment = Column(String, nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    order_id: Mapped[int] = mapped_column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    old_status: Mapped[OrderStatusEnum | None] = mapped_column(Enum(OrderStatusEnum), nullable=True)
+    new_status: Mapped[OrderStatusEnum] = mapped_column(Enum(OrderStatusEnum), nullable=False)
+    changed_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
+    changed_by_user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    comment: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    order = relationship("Order", back_populates="history")
-    changed_by = relationship("User")
-    
+    order: Mapped["Order"] = relationship("Order", back_populates="history")
+    changed_by: Mapped["User"] = relationship("User")
+
 class Comment(Base):
     __tablename__ = 'comments'
 
-    id = Column(Integer, primary_key=True, index=True)
-    text = Column(String(255), nullable=False)
-    answer = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=func.now())
-    rating = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    text: Mapped[str] = mapped_column(String(255), nullable=False)
+    answer: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    client_id = Column(Integer, ForeignKey("clients.id", ondelete="CASCADE"))
-    client = relationship("Client", back_populates="comments")
-    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"))
-    order = relationship("Order", back_populates="comment", uselist=False)
-    carrier_id = Column(Integer, ForeignKey("carriers.id", ondelete="CASCADE"))
-    carrier = relationship("Carrier", back_populates="comments")
-    transport_id = Column(Integer, ForeignKey("transports.id", ondelete="CASCADE"))
-    transport = relationship("Transport", back_populates="comments")
-    
+    client_id: Mapped[int] = mapped_column(Integer, ForeignKey("clients.id", ondelete="CASCADE"))
+    client: Mapped["Client"] = relationship("Client", back_populates="comments")
+    order_id: Mapped[int] = mapped_column(Integer, ForeignKey("orders.id", ondelete="CASCADE"))
+    order: Mapped["Order"] = relationship("Order", back_populates="comment", uselist=False)
+    carrier_id: Mapped[int] = mapped_column(Integer, ForeignKey("carriers.id", ondelete="CASCADE"))
+    carrier: Mapped["Carrier"] = relationship("Carrier", back_populates="comments")
+    transport_id: Mapped[int] = mapped_column(Integer, ForeignKey("transports.id", ondelete="CASCADE"))
+    transport: Mapped["Transport"] = relationship("Transport", back_populates="comments")
 
 

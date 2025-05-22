@@ -6,20 +6,12 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from dotenv import load_dotenv
-load_dotenv()
+from app.core.config import settings
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
 
-db_login = os.getenv("DB_LOGIN")
-db_pass = os.getenv("DB_PASS")
-db_host = os.getenv("DB_HOST")
-db_port = os.getenv("DB_PORT")
-db_name = os.getenv("DB_NAME")
 
-sqlalchemy_url = f"postgresql+asyncpg://{db_login}:{db_pass}@{db_host}:{db_port}/{db_name}"
+sqlalchemy_url = settings.DATABASE_URL
 config.set_main_option("sqlalchemy.url", sqlalchemy_url)
 
 # Interpret the config file for Python logging.
@@ -32,10 +24,9 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from app.db.base import Base
-from app.models import user # Import your models here
+from app import models
 
-target_metadata = Base.metadata
+target_metadata = models.Base.metadata
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")

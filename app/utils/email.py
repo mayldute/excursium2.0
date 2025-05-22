@@ -1,29 +1,61 @@
+import logging
 import smtplib
 import asyncio
 from functools import partial
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-import os
+from app.core.config import settings
 
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = os.getenv("SMTP_PORT")
-SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-FROM_EMAIL = os.getenv("FROM_EMAIL")
+# Logger for email-related operations
+logger = logging.getLogger(__name__)
 
+def _send_email_sync(to: str, subject: str, body: str) -> None:
+    """Send an email synchronously using SMTP over SSL.
 
-def _send_email_sync(to: str, subject: str, body: str):
+    Args:
+        to (str): The recipient's email address.
+        subject (str): The subject of the email.
+        body (str): The HTML content of the email.
+
+    Returns:
+        None
+
+    Raises:
+        smtplib.SMTPException: If the email sending fails due to SMTP server issues.
+    """
+    # Create email message
     message = MIMEMultipart()
-    message["From"] = FROM_EMAIL
+    message["From"] = settings.FROM_EMAIL
     message["To"] = to
     message["Subject"] = subject
-    message.attach(MIMEText(body, "plain"))
+    message.attach(MIMEText(body, "html"))
 
-    with smtplib.SMTP_SSL(SMTP_SERVER, int(SMTP_PORT)) as server:
-        server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.send_message(message)
+    # Connect to SMTP server and send email
+    try:
+        with smtplib.SMTP_SSL(settings.SMTP_SERVER, int(settings.SMTP_PORT)) as server:
+            server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+            server.send_message(message)
+    except smtplib.SMTPException as e:
+        logger.error(f"Failed to send email to {to}: {e}")
+        raise
 
-async def send_email(to: str, subject: str, body: str):
-    loop = asyncio.get_event_loop()
+async def send_email(to: str, subject: str, body: str) -> None:
+    """Send an email asynchronously without blocking the event loop.
+
+    Args:
+        to (str): The recipient's email address.
+        subject (str): The subject of the email.
+        body (str): The HTML content of the email.
+
+    Returns:
+        None
+
+    Raises:
+        smtplib.SMTPException: If the email sending fails due to SMTP server issues.
+    """
+    # Run synchronous email sending in executor
+    loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, partial(_send_email_sync, to, subject, body))
+

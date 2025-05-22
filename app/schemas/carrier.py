@@ -1,35 +1,70 @@
 from pydantic import BaseModel, model_validator
-from typing import Optional
-from app.schemas.user import UserCreate
+
+from app.schemas import UserCreate, UserResponse, UserUpdate
+from app.utils import validate_legal_minimal, validate_legal_entity
+from app.models import LegalTypeEnum, DocTypeEnum, DocStatusEnum
 
 class CarrierCreate(BaseModel):
-    carrier_type: str
-    custom_type: Optional[str] = None
+    legal_type: LegalTypeEnum
+    custom_type: str | None = None   # Custom type for other legal types
     company_name: str
     inn: str
     kpp: str
     user: UserCreate
 
     @model_validator(mode="before")
-    def validate_client_data(cls, values):
-        carrier_type = values.get("carrier_type")
-        custom_type = values.get("custom_type")
-
-        if carrier_type == "OTH" and not custom_type:
-            raise ValueError("Custom type is required when carrier_type is 'OTH'.")
-        
-        if carrier_type != "OTH" and custom_type:
-            raise ValueError("Custom type should not be provided when carrier_type is not 'OTH'.")
-            
-        if carrier_type == "IE":
-            if len(values.get("inn", "")) != 12:
-                    raise ValueError("INN must be 12 characters for IE.")
-        else:
-            if len(values.get("inn", "")) != 10:
-                raise ValueError("INN must be 10 characters")
-        
-        if len(values.get("kpp", "")) != 9:
-            raise ValueError("KPP must be 10 characters")
+    def validate_carrier_data(cls, values):
+        # Validate company name, INN, KPP, and legal type
+        validate_legal_minimal(values)
         
         return values
     
+class CarrierResponse(BaseModel):
+    id: int
+    legal_type: LegalTypeEnum
+    custom_type: str 
+    company_name: str
+    inn: str
+    kpp: str
+    ogrn: str 
+    current_account: str 
+    corresp_account: str 
+    bik: str
+    oktmo: str 
+    address: str 
+    rating: float 
+    user: UserResponse
+
+    class Config:
+        from_attributes = True
+
+class CarrierUpdate(BaseModel):
+    legal_type: LegalTypeEnum | None = None
+    custom_type: str | None = None
+    company_name: str | None = None
+    inn: str | None = None
+    kpp: str | None = None
+    ogrn: str | None = None
+    current_account: str | None = None
+    corresp_account: str | None = None
+    bik: str | None = None
+    oktmo: str | None = None
+    address: str | None = None
+    user: UserUpdate | None = None
+
+    @model_validator(mode="before")
+    def validate_carrier_update(cls, values):
+        # Validate all carrier fields
+        validate_legal_entity(values)
+
+        return values
+    
+class CarrierDocsResponse(BaseModel):
+    id: int
+    carrier_id: int
+    doc_type: DocTypeEnum
+    file_path: str
+    status: DocStatusEnum
+
+    class Config:
+        from_attributes = True
