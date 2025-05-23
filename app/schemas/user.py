@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, model_validator, StringConstraints
+from pydantic import BaseModel, EmailStr, model_validator, StringConstraints, Field
 from typing import Optional, Annotated
 
 # Custom type for phone number validation
@@ -13,13 +13,13 @@ PhoneNumberStr = Annotated[
 ]
 
 class UserCreate(BaseModel):
-    first_name: str | None = None
-    last_name: str | None = None
-    middle_name: str | None = None
-    email: EmailStr
-    phone_number: PhoneNumberStr | None = None
-    password1: str
-    password2: str
+    first_name: str | None = Field(default=None, description="User's first name", example="John")
+    last_name: str | None = Field(default=None, description="User's last name", example="Doe")
+    middle_name: str | None = Field(default=None, description="User's middle name", example="Michael")
+    email: EmailStr = Field(..., description="User's email address", example="john.doe@example.com")
+    phone_number: PhoneNumberStr | None = Field(default=None, description="User's phone number in international format", example="+12345678901")
+    password1: str = Field(..., description="User's password", example="StrongPass123")
+    password2: str = Field(..., description="Password confirmation", example="StrongPass123")
 
     @model_validator(mode="before")
     def check_passwords(cls, values):
@@ -41,35 +41,35 @@ class UserCreate(BaseModel):
         return values
     
 class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+    email: EmailStr = Field(..., description="User's email", example="john.doe@example.com")
+    password: str = Field(..., description="User's password", example="StrongPass123")
 
 class UserResponse(BaseModel):
-    id: int
-    first_name: str 
-    last_name: str
-    middle_name: str 
-    email: EmailStr
-    phone_number: PhoneNumberStr 
-    photo: str 
+    id: int = Field(..., description="User ID", example=1)
+    first_name: str = Field(..., description="First name", example="John")
+    last_name: str = Field(..., description="Last name", example="Doe")
+    middle_name: str = Field(..., description="Middle name", example="Michael")
+    email: EmailStr = Field(..., description="Email", example="john.doe@example.com")
+    phone_number: PhoneNumberStr = Field(..., description="Phone number", example="+12345678901")
+    photo: str = Field(..., description="Path to user photo", example="user_photos/photo.jpg")
     class Config:
         from_attributes = True
 
 class UserUpdate(BaseModel):
-    first_name: str | None = None
-    last_name: str | None = None
-    middle_name: str | None = None
-    phone_number: Optional[PhoneNumberStr] = None
-    photo: Optional[str] = None
+    first_name: str | None = Field(default=None, description="First name", example="John")
+    last_name: str | None = Field(default=None, description="Last name", example="Doe")
+    middle_name: str | None = Field(default=None, description="Middle name", example="Michael")
+    phone_number: Optional[PhoneNumberStr] = Field(default=None, description="Phone number", example="+12345678901")
+    photo: Optional[str] = Field(default=None, description="Photo path", example="user_photos/photo.jpg")
 
 class Token(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str
+    access_token: str = Field(..., description="JWT access token", example="eyJhbGciOiJIUzI1...")
+    refresh_token: str = Field(..., description="JWT refresh token", example="eyJhbGciOiJIUzI1...")
+    token_type: str = Field(..., description="Token type", example="bearer")
 
 class PasswordChangeRequest(BaseModel):
-    old_password: str
-    new_password: str
+    old_password: str = Field(..., description="Current password", example="OldPass123")
+    new_password: str = Field(..., description="New password", example="NewStrongPass456")
 
 class EmailRequest(BaseModel):
-    email: EmailStr
+    email: EmailStr = Field(..., description="Email address", example="user@example.com")

@@ -27,15 +27,15 @@ def _send_email_sync(to: str, subject: str, body: str) -> None:
     """
     # Create email message
     message = MIMEMultipart()
-    message["From"] = settings.FROM_EMAIL
+    message["From"] = settings.smtp.from_email
     message["To"] = to
     message["Subject"] = subject
     message.attach(MIMEText(body, "html"))
 
     # Connect to SMTP server and send email
     try:
-        with smtplib.SMTP_SSL(settings.SMTP_SERVER, int(settings.SMTP_PORT)) as server:
-            server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+        with smtplib.SMTP_SSL(settings.stmp.smtp_server, int(settings.stmp.stmp_port)) as server:
+            server.login(settings.stmp.stmp_username, settings.stmp.stmp_password)
             server.send_message(message)
     except smtplib.SMTPException as e:
         logger.error(f"Failed to send email to {to}: {e}")

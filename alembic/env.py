@@ -11,7 +11,7 @@ from app.core.config import settings
 config = context.config
 
 
-sqlalchemy_url = settings.DATABASE_URL
+sqlalchemy_url = settings.database.database_url
 config.set_main_option("sqlalchemy.url", sqlalchemy_url)
 
 # Interpret the config file for Python logging.

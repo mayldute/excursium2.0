@@ -8,7 +8,7 @@ from app.api.v1.user import router as user_router
 from app.tasks.cleanup import delete_unactivated_users, delete_deleted_users, delete_unchanged_emails
 
 # Initialize FastAPI application
-app = FastAPI(debug=settings.DEBUG)
+app = FastAPI(debug=settings.app.debug)
 
 # Register API routers
 app.include_router(client_router)

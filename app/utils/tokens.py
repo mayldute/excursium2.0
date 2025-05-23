@@ -1,22 +1,22 @@
 import jwt
-import os
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User, RefreshToken
+from app.core.config import settings
 
 # JWT secret key for encoding and decoding tokens
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+SECRET_KEY = settings.jwt.jwt_secret_key
 
 # Algorithm used for JWT encoding
-ALGORITHM = "HS256"
+ALGORITHM = settings.jwt.jwt_algorithm
 
 # Expiration time for access tokens in minutes
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.jwt.jwt_access_token_expire_minutes
 
 # Expiration time for refresh tokens in days
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+REFRESH_TOKEN_EXPIRE_DAYS = settings.jwt.jwt_refresh_token_expire_days
 
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     """Create a JWT access token with the provided data and expiration time.

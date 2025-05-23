@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 # MinIO client for interacting with the storage service
 minio_client = Minio(
-    settings.MINIO_ENDPOINT,
-    access_key=settings.MINIO_ACCESS_KEY,
-    secret_key=settings.MINIO_SECRET_KEY,
-    secure=settings.MINIO_SECURE
+    settings.minio.minio_endpoint,
+    access_key=settings.minio.minio_access_key,
+    secret_key=settings.minio.minio_secret_key,
+    secure=settings.minio.minio_secure
 )
 
 async def upload_file_to_minio(file: UploadFile, object_name: str) -> str:
@@ -38,7 +38,7 @@ async def upload_file_to_minio(file: UploadFile, object_name: str) -> str:
 
     # Upload file to MinIO
     minio_client.put_object(
-        bucket_name=settings.MINIO_BUCKET_NAME,
+        bucket_name=settings.minio.minio_bucket_name,
         object_name=object_name,
         data=io.BytesIO(content),
         length=len(content),
@@ -111,7 +111,7 @@ def generate_presigned_url(object_name: str) -> str:
     # Generate presigned URL
     try:
         url = minio_client.presigned_get_object(
-            settings.MINIO_BUCKET_NAME,
+            settings.minio.minio_bucket_name,
             object_name,
             expires=timedelta(minutes=10)
         )
@@ -133,7 +133,7 @@ def delete_photo_from_minio(object_name: str) -> None:
     # Attempt to delete object from MinIO
     try:
         minio_client.remove_object(
-            bucket_name=settings.MINIO_BUCKET_NAME,
+            bucket_name=settings.minio_bucket_name,
             object_name=object_name
         )
     except Exception as e:

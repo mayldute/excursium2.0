@@ -282,7 +282,7 @@ async def change_user_email_service(user: User, new_email: EmailStr, db: AsyncSe
 
     return {
         "message": "Change email adress successful. Please check your email to confirm your new email.",
-        "activation_link": email_change_link if settings.DEBUG else None,
+        "activation_link": email_change_link if settings.app.debug else None,
     }
 
 async def confirm_email_change(token: str, db: AsyncSession) -> dict:

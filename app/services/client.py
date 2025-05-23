@@ -94,7 +94,7 @@ async def register_client_service(payload: ClientCreate, db: AsyncSession) -> di
 
     return {
         "message": "Registration successful. Please check your email to activate your account.",
-        "activation_link": activation_link if settings.DEBUG else None,
+        "activation_link": activation_link if settings.app.debug else None,
     }
 
 

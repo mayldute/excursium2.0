@@ -4,12 +4,26 @@ from app.schemas import UserCreate, UserResponse, UserUpdate
 from app.utils import validate_legal_minimal, validate_legal_entity
 from app.models import LegalTypeEnum, DocTypeEnum, DocStatusEnum
 
+from pydantic import Field
+
 class CarrierCreate(BaseModel):
-    legal_type: LegalTypeEnum
-    custom_type: str | None = None   # Custom type for other legal types
-    company_name: str
-    inn: str
-    kpp: str
+    legal_type: LegalTypeEnum = Field(
+        ..., description="Legal type of the carrier", example="LLC"
+    )
+    custom_type: str | None = Field(
+        default=None,
+        description="Custom type if legal type is 'Other'",
+        example="Sole Proprietor without formal registration"
+    )
+    company_name: str = Field(
+        ..., description="Registered company name", example="LLC Romashka"
+    )
+    inn: str = Field(
+        ..., description="Taxpayer Identification Number", example="1234567890"
+    )
+    kpp: str = Field(
+        ..., description="Tax Registration Reason Code", example="123456789"
+    )
     user: UserCreate
 
     @model_validator(mode="before")
@@ -20,37 +34,87 @@ class CarrierCreate(BaseModel):
         return values
     
 class CarrierResponse(BaseModel):
-    id: int
-    legal_type: LegalTypeEnum
-    custom_type: str 
-    company_name: str
-    inn: str
-    kpp: str
-    ogrn: str 
-    current_account: str 
-    corresp_account: str 
-    bik: str
-    oktmo: str 
-    address: str 
-    rating: float 
+    id: int = Field(
+        ..., description="Carrier ID", example=1
+    )
+    legal_type: LegalTypeEnum = Field(
+        ..., description="Legal type of the carrier", example="LLC"
+    )
+    custom_type: str = Field(
+        ..., description="Custom type", example="Sole Proprietor without formal registration"
+    )
+    company_name: str = Field(
+        ..., description="Registered company name", example="LLC Romashka"
+    )
+    inn: str = Field(
+        ..., description="Taxpayer Identification Number", example="1234567890"
+    )
+    kpp: str = Field(
+        ..., description="Tax Registration Reason Code", example="123456789"
+    )
+    ogrn: str = Field(
+        ..., description="Primary State Registration Number", example="1234567890123"
+    )
+    current_account: str = Field(
+        ..., description="Current account number", example="40702810900000000001"
+    )
+    corresp_account: str = Field(
+        ..., description="Correspondent account", example="30101810400000000225"
+    )
+    bik: str = Field(
+        ..., description="Bank Identifier Code", example="044525225"
+    )
+    oktmo: str = Field(
+        ..., description="OKTMO code", example="45382000"
+    )
+    address: str = Field(
+        ..., description="Legal address", example="Moscow, Lenina St., 1"
+    )
+    rating: float = Field(
+        ..., description="Carrier rating", example=4.8
+    )
     user: UserResponse
 
     class Config:
         from_attributes = True
 
 class CarrierUpdate(BaseModel):
-    legal_type: LegalTypeEnum | None = None
-    custom_type: str | None = None
-    company_name: str | None = None
-    inn: str | None = None
-    kpp: str | None = None
-    ogrn: str | None = None
-    current_account: str | None = None
-    corresp_account: str | None = None
-    bik: str | None = None
-    oktmo: str | None = None
-    address: str | None = None
-    user: UserUpdate | None = None
+    legal_type: LegalTypeEnum | None = Field(
+        default=None, description="Legal type", example="LLC"
+    )
+    custom_type: str | None = Field(
+        default=None,
+        description="Custom type if legal type is 'Other'",
+        example="Sole Proprietor without formal registration"
+    )
+    company_name: str | None = Field(
+        default=None, description="Company name", example="LLC Romashka"
+    )
+    inn: str | None = Field(
+        default=None, description="INN", example="1234567890"
+    )
+    kpp: str | None = Field(
+        default=None, description="KPP", example="123456789"
+    )
+    ogrn: str | None = Field(
+        default=None, description="OGRN", example="1234567890123"
+    )
+    current_account: str | None = Field(
+        default=None, description="Current account", example="40702810900000000001"
+    )
+    corresp_account: str | None = Field(
+        default=None, description="Correspondent account", example="30101810400000000225"
+    )
+    bik: str | None = Field(
+        default=None, description="BIK", example="044525225"
+    )
+    oktmo: str | None = Field(
+        default=None, description="OKTMO", example="45382000"
+    )
+    address: str | None = Field(
+        default=None, description="Address", example="Moscow, Lenina St., 1"
+    )
+    user: UserUpdate | None = Field(default=None)
 
     @model_validator(mode="before")
     def validate_carrier_update(cls, values):
@@ -60,11 +124,21 @@ class CarrierUpdate(BaseModel):
         return values
     
 class CarrierDocsResponse(BaseModel):
-    id: int
-    carrier_id: int
-    doc_type: DocTypeEnum
-    file_path: str
-    status: DocStatusEnum
+    id: int = Field(
+        ..., description="Document ID", example=101
+    )
+    carrier_id: int = Field(
+        ..., description="Associated carrier ID", example=1
+    )
+    doc_type: DocTypeEnum = Field(
+        ..., description="Document type", example="LC"
+    )
+    file_path: str = Field(
+        ..., description="Path to file in storage", example="carrier_docs/license.pdf"
+    )
+    status: DocStatusEnum = Field(
+        ..., description="Document status", example="PENDING"
+    )
 
     class Config:
         from_attributes = True
