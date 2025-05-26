@@ -23,6 +23,11 @@ class DocTypeEnum(str, enum.Enum):
     IS = "IS" #Insurance
     CT = "CT" #Contract
 
+class DocStatusEnum(str, enum.Enum):
+    PENDING = "PENDING" #Pending
+    APPROVED = "APPROVED" #Approved
+    REJECTED = "REJECTED" #Rejected
+
 class OrderStatusEnum(str, enum.Enum):
     NEW = "NEW"   #New
     CONFIRMD = "CONFIRMED" #Confirmed
@@ -31,7 +36,7 @@ class OrderStatusEnum(str, enum.Enum):
     REJECTED = "REJECTED" #Rejected
     ARCHIVED = "ARCHIVED" #Archived
 
-class PassenderTypeEnum(str, enum.Enum):
+class PassengerTypeEnum(str, enum.Enum):
     CHILDREN = "CHILDREN" #Children
     ADULT = "ADULT" #Adult
     MIXED = "MIXED" #Mixed
