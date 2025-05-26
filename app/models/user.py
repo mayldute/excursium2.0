@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime, timezone
 
 from sqlalchemy import Integer, String, Boolean, DateTime, func, Enum, Float, ForeignKey
@@ -6,32 +5,29 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base import Base
 from app.models.enums import ClientTypeEnum, LegalTypeEnum
-from app.utils import generate_presigned_url
 
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    first_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    last_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    first_name: Mapped[str] = mapped_column(String(255), nullable=True)
+    last_name: Mapped[str] = mapped_column(String(255), nullable=True)
     middle_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    phone_number: Mapped[str] = mapped_column(String(16), unique=True, index=True, nullable=False)
+    phone_number: Mapped[str] = mapped_column(String(16), unique=True, index=True, nullable=True)
     is_staff: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_subscribed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_oauth_user: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     photo: Mapped[str] = mapped_column(String, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=True)
 
     client: Mapped["Client"] = relationship("Client", back_populates="user", uselist=False, cascade="all, delete-orphan")
     carrier: Mapped["Carrier"] = relationship("Carrier", back_populates="user", uselist=False, cascade="all, delete-orphan")
     refresh_token: Mapped["RefreshToken"] = relationship("RefreshToken", back_populates="user", uselist=False, cascade="all, delete-orphan")
     change_email: Mapped["ChangeEmail"] = relationship("ChangeEmail", back_populates="user", uselist=False, cascade="all, delete-orphan")
-
-    def get_photo_url(self):
-        return asyncio.to_thread(generate_presigned_url, self.photo)
 
 class Client(Base):
     __tablename__ = "clients"

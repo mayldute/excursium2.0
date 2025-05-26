@@ -40,7 +40,7 @@ class CarrierResponse(BaseModel):
     legal_type: LegalTypeEnum = Field(
         ..., description="Legal type of the carrier", example="LLC"
     )
-    custom_type: str = Field(
+    custom_type: str | None  = Field(
         ..., description="Custom type", example="Sole Proprietor without formal registration"
     )
     company_name: str = Field(
@@ -52,22 +52,22 @@ class CarrierResponse(BaseModel):
     kpp: str = Field(
         ..., description="Tax Registration Reason Code", example="123456789"
     )
-    ogrn: str = Field(
+    ogrn: str | None = Field(
         ..., description="Primary State Registration Number", example="1234567890123"
     )
-    current_account: str = Field(
+    current_account: str | None = Field(
         ..., description="Current account number", example="40702810900000000001"
     )
-    corresp_account: str = Field(
+    corresp_account: str | None = Field(
         ..., description="Correspondent account", example="30101810400000000225"
     )
-    bik: str = Field(
+    bik: str | None = Field(
         ..., description="Bank Identifier Code", example="044525225"
     )
-    oktmo: str = Field(
+    oktmo: str | None = Field(
         ..., description="OKTMO code", example="45382000"
     )
-    address: str = Field(
+    address: str | None = Field(
         ..., description="Legal address", example="Moscow, Lenina St., 1"
     )
     rating: float = Field(

@@ -146,7 +146,7 @@ async def get_carrier_service(carrier_id: int, current_user: User, db: AsyncSess
         raise HTTPException(status_code=403, detail="User is not active")
     
     # Update user photo with a presigned URL
-    photo_url = await carrier.user.get_photo_url()
+    photo_url = generate_presigned_url(carrier.user.photo)
     carrier.user.photo = photo_url
 
     return carrier

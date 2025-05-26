@@ -34,8 +34,8 @@ def _send_email_sync(to: str, subject: str, body: str) -> None:
 
     # Connect to SMTP server and send email
     try:
-        with smtplib.SMTP_SSL(settings.stmp.smtp_server, int(settings.stmp.stmp_port)) as server:
-            server.login(settings.stmp.stmp_username, settings.stmp.stmp_password)
+        with smtplib.SMTP_SSL(settings.smtp.smtp_server, int(settings.smtp.smtp_port)) as server:
+            server.login(settings.smtp.smtp_username, settings.smtp.smtp_password)
             server.send_message(message)
     except smtplib.SMTPException as e:
         logger.error(f"Failed to send email to {to}: {e}")

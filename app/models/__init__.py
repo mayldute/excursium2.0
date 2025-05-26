@@ -6,7 +6,7 @@ from .city import City, Route
 from .docs import Docs, ExtraService
 from .newsletter import Newsletter
 from .enums import ClientTypeEnum, LegalTypeEnum, DocTypeEnum, OrderStatusEnum, PassengerTypeEnum, PaymentMethodEnum, PaymentStatusEnum, DocStatusEnum
-from .refresh_token import RefreshToken
+from .token_state import RefreshToken, OAuthState
 
 __all__ = [
     "User", "Client", "Carrier", "ChangeEmail",
@@ -17,5 +17,5 @@ __all__ = [
     "ClientTypeEnum", "LegalTypeEnum",
     "DocTypeEnum", "OrderStatusEnum", "PassengerTypeEnum",
     "PaymentMethodEnum", "PaymentStatusEnum", "DocStatusEnum",
-    "Newsletter", "RefreshToken",
+    "Newsletter", "RefreshToken", "OAuthState",
 ]

@@ -76,6 +76,9 @@ async def authenticate_user(email: str, password: str, db: AsyncSession) -> dict
     if not user.is_active:
         raise HTTPException(403, "Please activate your account")
     
+    if user.is_oauth_user:
+     raise HTTPException(status_code=400, detail="Please login with social account.")
+    
     # Generate and return tokens
     return await get_tokens_for_user(user, db)
 

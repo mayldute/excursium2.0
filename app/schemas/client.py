@@ -33,17 +33,17 @@ class ClientCreate(BaseModel):
 class ClientResponse(BaseModel):
     id: int = Field(..., description="Client ID", example=1)
     client_type: ClientTypeEnum = Field(..., description="Client type", example="IND")
-    legal_type: LegalTypeEnum = Field(..., description="Legal type", example="LLC")
-    custom_type: str = Field(..., description="Custom legal type if applicable", example="Non-standard entity")
-    company_name: str = Field(..., description="Company name", example="LLC Example")
-    inn: str = Field(..., description="INN", example="1234567890")
-    kpp: str = Field(..., description="KPP", example="123456789")
-    ogrn: str = Field(..., description="OGRN", example="1234567890123")
-    current_account: str = Field(..., description="Current account", example="40702810900000000001")
-    corresp_account: str = Field(..., description="Correspondent account", example="30101810400000000225")
-    bik: str = Field(..., description="Bank Identifier Code", example="044525225")
-    oktmo: str = Field(..., description="OKTMO code", example="45382000")
-    address: str = Field(..., description="Legal address", example="Moscow, Lenina St., 1")
+    legal_type: LegalTypeEnum | None = Field(..., description="Legal type", example="LLC")
+    custom_type: str | None = Field(..., description="Custom legal type if applicable", example="Non-standard entity")
+    company_name: str | None = Field(..., description="Company name", example="LLC Example")
+    inn: str | None = Field(..., description="INN", example="1234567890")
+    kpp: str | None = Field(..., description="KPP", example="123456789")
+    ogrn: str | None = Field(..., description="OGRN", example="1234567890123")
+    current_account: str | None = Field(..., description="Current account", example="40702810900000000001")
+    corresp_account: str | None = Field(..., description="Correspondent account", example="30101810400000000225")
+    bik: str | None = Field(..., description="Bank Identifier Code", example="044525225")
+    oktmo: str | None = Field(..., description="OKTMO code", example="45382000")
+    address: str | None = Field(..., description="Legal address", example="Moscow, Lenina St., 1")
     user: UserResponse
 
     class Config:

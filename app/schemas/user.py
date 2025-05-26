@@ -26,6 +26,9 @@ class UserCreate(BaseModel):
         """Check if the passwords match and meet complexity requirements."""
         password = values.get("password1")
 
+        if not values.get("is_oauth_user") and not values.get("password"):
+            raise ValueError("Password is required for non-OAuth users.")
+
         if not any(c.islower() for c in password):
             raise ValueError("Password must contain at least one lowercase letter.")
         
@@ -62,6 +65,12 @@ class UserUpdate(BaseModel):
     phone_number: Optional[PhoneNumberStr] = Field(default=None, description="Phone number", example="+12345678901")
     photo: Optional[str] = Field(default=None, description="Photo path", example="user_photos/photo.jpg")
 
+class CompleteRegistration(BaseModel):
+    first_name: str = Field(..., description="First name", example="John")  
+    last_name: str = Field(..., description="Last name", example="Doe")
+    middle_name: str | None = Field(default=None, description="Middle name", example="Michael")  
+    phone_number: PhoneNumberStr = Field(..., description="Phone number", example="+12345678901")
+    
 class Token(BaseModel):
     access_token: str = Field(..., description="JWT access token", example="eyJhbGciOiJIUzI1...")
     refresh_token: str = Field(..., description="JWT refresh token", example="eyJhbGciOiJIUzI1...")

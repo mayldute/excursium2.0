@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from pydantic_settings import BaseSettings
 
 class AppSettings(BaseModel):
@@ -34,12 +34,24 @@ class MinioSettings(BaseModel):
     minio_bucket_name: str
     minio_secure: bool
 
+class GoogleSettings(BaseModel):
+    google_client_id: str
+    google_client_secret: str
+    google_redirect_uri: str
+
+class YandexSettings(BaseModel):
+    yandex_client_id: str
+    yandex_client_secret: str
+    yandex_redirect_uri: str
+
 class Settings(BaseSettings):
     app: AppSettings
     database: DatabaseSettings
     jwt: JwtSettings
     smtp: SmtpSettings
     minio: MinioSettings
+    google: GoogleSettings
+    yandex: YandexSettings
 
     class Config:
         env_file = ".env"
