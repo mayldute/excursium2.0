@@ -18,16 +18,14 @@ class UserCreate(BaseModel):
     middle_name: str | None = Field(default=None, description="User's middle name", example="Michael")
     email: EmailStr = Field(..., description="User's email address", example="john.doe@example.com")
     phone_number: PhoneNumberStr | None = Field(default=None, description="User's phone number in international format", example="+12345678901")
-    password1: str = Field(..., description="User's password", example="StrongPass123")
-    password2: str = Field(..., description="Password confirmation", example="StrongPass123")
+    is_oauth_user: bool = Field(default=False, description="Indicates if the user is created via OAuth", example=False)
+    password1: str = Field(..., description="User's password", example="StrongPass123!")
+    password2: str = Field(..., description="Password confirmation", example="StrongPass123!")
 
     @model_validator(mode="before")
     def check_passwords(cls, values):
         """Check if the passwords match and meet complexity requirements."""
         password = values.get("password1")
-
-        if not values.get("is_oauth_user") and not values.get("password"):
-            raise ValueError("Password is required for non-OAuth users.")
 
         if not any(c.islower() for c in password):
             raise ValueError("Password must contain at least one lowercase letter.")
@@ -45,7 +43,7 @@ class UserCreate(BaseModel):
     
 class UserLogin(BaseModel):
     email: EmailStr = Field(..., description="User's email", example="john.doe@example.com")
-    password: str = Field(..., description="User's password", example="StrongPass123")
+    password: str = Field(..., description="User's password", example="StrongPass123!")
 
 class UserResponse(BaseModel):
     id: int = Field(..., description="User ID", example=1)
@@ -77,8 +75,8 @@ class Token(BaseModel):
     token_type: str = Field(..., description="Token type", example="bearer")
 
 class PasswordChangeRequest(BaseModel):
-    old_password: str = Field(..., description="Current password", example="OldPass123")
-    new_password: str = Field(..., description="New password", example="NewStrongPass456")
+    old_password: str = Field(..., description="Current password", example="OldPass123!")
+    new_password: str = Field(..., description="New password", example="NewStrongPass456!")
 
 class EmailRequest(BaseModel):
     email: EmailStr = Field(..., description="Email address", example="user@example.com")
