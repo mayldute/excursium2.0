@@ -28,6 +28,7 @@ class Transport(Base):
     route_id: Mapped[int] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"))
     route: Mapped["Route"] = relationship(back_populates="transports")
     comments: Mapped[list["Comment"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
+    transport_routes: Mapped[list["TransportRoute"]] = relationship(back_populates="transport",cascade="all, delete-orphan")
 
     @staticmethod
     def update_transport_rating(db, transport_id: int):
@@ -52,6 +53,7 @@ class Route(Base):
     transports: Mapped[list["Transport"]] = relationship(back_populates="route", lazy='dynamic', uselist=True)
     orders: Mapped[list["Order"]] = relationship(back_populates="route", lazy='dynamic', uselist=True)
     schedules: Mapped[list["Schedule"]] = relationship(back_populates="route", lazy='dynamic', uselist=True)
+    transport_routes: Mapped[list["TransportRoute"]] = relationship(back_populates="route", cascade="all, delete-orphan")
 
     __table_args__ = (
         UniqueConstraint("id_from", "id_to", name="uq_route_from_to"),
