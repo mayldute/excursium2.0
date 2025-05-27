@@ -60,14 +60,14 @@ class Route(Base):
 class TransportRoute(Base): 
     __tablename__ = 'transport_routes'
 
-    id = Column(Integer, primary_key=True, index=True)
-    min_price = Column(Float)
-    max_price = Column(Float)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    min_price: Mapped[float] = mapped_column(Float)
+    max_price: Mapped[float] = mapped_column(Float)
 
-    route_id = Column(Integer, ForeignKey('routes.id', ondelete="CASCADE"))
-    transport_id = Column(Integer, ForeignKey('transports.id', ondelete="CASCADE"))
-    route = relationship("Route", back_populates="transport_routes")
-    transport = relationship("Transport", back_populates="transport_routes")
+    route_id: Mapped[int] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"), nullable=False)
+    transport_id: Mapped[int] = mapped_column(Integer, ForeignKey("transports.id", ondelete="CASCADE"), nullable=False)
+    route: Mapped["Route"] = relationship("Route", back_populates="transport_routes")
+    transport: Mapped["Transport"] = relationship("Transport", back_populates="transport_routes")
 
 class Schedule(Base):
     __tablename__ = 'schedules'
