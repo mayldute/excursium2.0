@@ -86,6 +86,9 @@ def validate_legal_entity(values: dict) -> None:
             expected_len (int): The expected length of the field.
             field_name (str): The name of the field for error messages.
 
+        Returns:
+            None
+
         Raises:
             ValueError: If the field value is provided and does not match the expected length.
         """
@@ -121,3 +124,25 @@ def validate_legal_entity(values: dict) -> None:
     oktmo = values.get("oktmo")
     if oktmo and len(oktmo) not in [8, 11]:
         raise ValueError("OKTMO must be 8 or 11 characters long.")
+    
+
+def validate_transport_data(values: dict) -> None:
+        """Validate transport data for creation or update.
+        Args:
+            values (dict): Dictionary containing transport data (e.g., name, brand, model, year, n_desk, n_seat).
+        
+        Returns:
+            None
+            
+        Raises:
+            ValueError: If year is not a valid 4-digit number, or if n_desk or n_seat are not positive integers.
+        """
+        year = values.get("year")
+        if year is not None and (not isinstance(year, int) or year < 1000 or year > 9999):
+            raise ValueError("Year must be a valid 4-digit number.")
+        
+        if "n_desk" in values and values["n_desk"] is not None and values["n_desk"] <= 0:
+            raise ValueError("Number of desks must be a positive integer.")
+    
+        if "n_seat" in values and values["n_seat"] is not None and values["n_seat"] <= 0:
+            raise ValueError("Number of seats must be a positive integer.")

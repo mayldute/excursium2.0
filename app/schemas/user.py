@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, model_validator, StringConstraints, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, model_validator, StringConstraints, Field
 from typing import Optional, Annotated
 
 # Custom type for phone number validation
@@ -53,8 +53,8 @@ class UserResponse(BaseModel):
     email: EmailStr = Field(..., description="Email", example="john.doe@example.com")
     phone_number: PhoneNumberStr = Field(..., description="Phone number", example="+12345678901")
     photo: str = Field(..., description="Path to user photo", example="user_photos/photo.jpg")
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)
 
 class UserUpdate(BaseModel):
     first_name: str | None = Field(default=None, description="First name", example="John")

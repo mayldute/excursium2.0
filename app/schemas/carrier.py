@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.schemas import UserCreate, UserResponse, UserUpdate
 from app.utils import validate_legal_minimal, validate_legal_entity
@@ -75,8 +75,7 @@ class CarrierResponse(BaseModel):
     )
     user: UserResponse
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CarrierUpdate(BaseModel):
     legal_type: LegalTypeEnum | None = Field(
@@ -140,5 +139,4 @@ class CarrierDocsResponse(BaseModel):
         ..., description="Document status", example="PENDING"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

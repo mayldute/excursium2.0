@@ -25,7 +25,7 @@ class Transport(Base):
     carrier: Mapped["Carrier"] = relationship(back_populates="transports")
     orders: Mapped[list["Order"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
     schedules: Mapped[list["Schedule"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
-    route_id: Mapped[int] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"))
+    route_id: Mapped[int] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"), nullable=True)
     route: Mapped["Route"] = relationship(back_populates="transports")
     comments: Mapped[list["Comment"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
     transport_routes: Mapped[list["TransportRoute"]] = relationship(back_populates="transport",cascade="all, delete-orphan")

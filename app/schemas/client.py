@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator, Field
+from pydantic import BaseModel, ConfigDict, model_validator, Field
 
 from app.schemas import UserCreate, UserResponse, UserUpdate
 from app.utils import validate_individual_client, validate_legal_minimal, validate_legal_entity
@@ -46,8 +46,7 @@ class ClientResponse(BaseModel):
     address: str | None = Field(..., description="Legal address", example="Moscow, Lenina St., 1")
     user: UserResponse
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ClientUpdate(BaseModel):
     client_type: ClientTypeEnum | None = Field(default=None, description="Type of client", example="IND")

@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 from uuid import uuid4
 
 from app.models import User, Client, OAuthState
-from app.schemas import ClientCreate, ClientUpdate, CompleteRegistration
+from app.schemas import ClientCreate, ClientUpdate, ClientResponse, CompleteRegistration
 from app.utils import( 
     hash_password, 
     create_activation_token, 
@@ -18,12 +18,7 @@ from app.utils import(
 
 from app.core.config import settings
 from app.core.oauth import oauth
-
-# Define a mapping for email fields based on the OAuth provider
-EMAIL_FIELDS = {
-    "google": "email",
-    "yandex": "default_email"
-}
+from app.core.constants import EMAIL_FIELDS
 
 async def get_owned_client_or_403(client_id: int, current_user: User, db: AsyncSession) -> Client:
     """Fetch a client by ID and verify user ownership.
@@ -114,7 +109,7 @@ async def register_client_service(payload: ClientCreate, db: AsyncSession) -> di
     }
 
 
-async def get_client_service(client_id: int, current_user: User, db: AsyncSession) -> Client:
+async def get_client_service(client_id: int, current_user: User, db: AsyncSession) -> ClientResponse:
     """Retrieve a client by ID, including the user's photo URL.
 
     Args:
@@ -137,10 +132,10 @@ async def get_client_service(client_id: int, current_user: User, db: AsyncSessio
     photo_url = generate_presigned_url(client.user.photo)
     client.user.photo = photo_url
 
-    return client
+    return ClientResponse.model_validate(client)
 
 
-async def update_client_service(client_id: int, payload: ClientUpdate, current_user: User, db: AsyncSession) -> Client:
+async def update_client_service(client_id: int, payload: ClientUpdate, current_user: User, db: AsyncSession) -> ClientResponse:
     """Update client and associated user information.
 
     Args:
@@ -175,7 +170,7 @@ async def update_client_service(client_id: int, payload: ClientUpdate, current_u
     db.add(client)
     await db.commit()
 
-    return client
+    return ClientResponse.model_validate(client)
 
 
 async def delete_client_service(client_id: int, current_user: User, db:AsyncSession) -> dict:
