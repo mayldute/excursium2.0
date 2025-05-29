@@ -1,7 +1,9 @@
-from sqlalchemy import Integer, String, Boolean, DateTime, Float, func, ForeignKey, UniqueConstraint
+from sqlalchemy import Integer, String, Boolean, DateTime, Float, func, ForeignKey, UniqueConstraint, Enum
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base import Base
+from app.models.enums import ScheduleReasonEnum
+
 
 class Transport(Base):
     __tablename__ = 'transports'
@@ -25,8 +27,6 @@ class Transport(Base):
     carrier: Mapped["Carrier"] = relationship(back_populates="transports")
     orders: Mapped[list["Order"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
     schedules: Mapped[list["Schedule"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
-    route_id: Mapped[int] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"), nullable=True)
-    route: Mapped["Route"] = relationship(back_populates="transports")
     comments: Mapped[list["Comment"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
     transport_routes: Mapped[list["TransportRoute"]] = relationship(back_populates="transport",cascade="all, delete-orphan")
 
@@ -50,7 +50,6 @@ class Route(Base):
 
     from_city: Mapped["City"] = relationship(back_populates="routes_from", foreign_keys=[id_from])
     to_city: Mapped["City"] = relationship(back_populates="routes_to", foreign_keys=[id_to])
-    transports: Mapped[list["Transport"]] = relationship(back_populates="route", lazy='dynamic', uselist=True)
     orders: Mapped[list["Order"]] = relationship(back_populates="route", lazy='dynamic', uselist=True)
     schedules: Mapped[list["Schedule"]] = relationship(back_populates="route", lazy='dynamic', uselist=True)
     transport_routes: Mapped[list["TransportRoute"]] = relationship(back_populates="route", cascade="all, delete-orphan")
@@ -75,12 +74,11 @@ class Schedule(Base):
     __tablename__ = 'schedules'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    trip_start: Mapped[DateTime] = mapped_column(DateTime)
-    trip_end: Mapped[DateTime] = mapped_column(DateTime)
-    price: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    accepts_orders: Mapped[bool] = mapped_column(Boolean, default=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime(timezone=True))
+    end_time: Mapped[DateTime] = mapped_column(DateTime(timezone=True))
+    reason : Mapped[ScheduleReasonEnum] = mapped_column(Enum(ScheduleReasonEnum), nullable=False, default=ScheduleReasonEnum.TECHNICAL)
 
     id_transport: Mapped[int] = mapped_column(Integer, ForeignKey('transports.id', ondelete="CASCADE"))
     transport: Mapped["Transport"] = relationship(back_populates="schedules")
-    route_id: Mapped[int] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"))
+    route_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"), nullable=True)
     route: Mapped["Route"] = relationship(back_populates="schedules")

@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload, DeclarativeBase
 
-from app.models import Transport, User, Carrier
-from app.schemas import TransportCreate, TransportUpdate, TransportResponse
+from app.models import Transport, User, Carrier, Route, TransportRoute,  Schedule
+from app.schemas import TransportCreate, TransportUpdate, TransportResponse, ScheduleCreate
 from app.utils import generate_presigned_url, upload_transport_photo_to_minio, delete_photo_from_minio
 from app.core.constants import ALLOWED_IMAGE_TYPES
 
@@ -98,6 +98,46 @@ async def create_transport_service(payload: TransportCreate, current_user: User,
     return TransportResponse.model_validate(transport)
 
 
+async def get_transports_by_carrier_id_service(carrier_id: int, current_user: User, db: AsyncSession) -> List[TransportResponse]:
+    """Gets a list of all transports for the specified carrier.
+
+    Args:
+        carrier_id (int): Carrier ID to get transports for.
+        current_user (User): The currently authenticated user.
+        db (AsyncSession): Asynchronous database session.
+
+    Returns:
+        List[TransportResponse]: List of Pydantic models with transport data.
+
+    Raises:
+        HTTPException: If carrier not found (404), user does not own carrier (403), or no transports found (404).
+    """
+    # Get carrier with user data for ownership check
+    result = await db.execute(select(Carrier).options(selectinload(Carrier.user)).where(Carrier.id == carrier_id))
+    carrier = result.scalar_one_or_none()
+
+    # Check existence of carrier and ownership
+    if not carrier:
+        raise HTTPException(status_code=404, detail="Carrier not found")
+    if carrier.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Get all transports for carrier
+    result = await db.execute(select(Transport).where(Transport.carrier_id == carrier_id))
+    transports = result.scalars().all()
+
+    # Check if transports exist
+    if not transports:
+        raise HTTPException(status_code=404, detail="No transports found for this carrier")
+
+    # Add presigned URLs for transport photos
+    for transport in transports:
+        transport.photo = generate_presigned_url(transport.photo)
+
+    # Convert to Pydantic models
+    return [TransportResponse.model_validate(transport) for transport in transports]
+
+
 async def update_transport_service(transport_id: int, payload: TransportUpdate, current_user: User, db: AsyncSession) -> TransportResponse:
     """Updates an existing transport by ID if user owns the carrier.
 
@@ -125,48 +165,6 @@ async def update_transport_service(transport_id: int, payload: TransportUpdate, 
 
     # Return updated transport as Pydantic model
     return TransportResponse.model_validate(transport)
-
-
-async def get_transports_by_carrier_id_service(carrier_id: int, current_user: User, db: AsyncSession) -> List[TransportResponse]:
-    """Gets a list of all transports for the specified carrier.
-
-    Args:
-        carrier_id (int): Carrier ID to get transports for.
-        current_user (User): The currently authenticated user.
-        db (AsyncSession): Asynchronous database session.
-
-    Returns:
-        List[TransportResponse]: List of Pydantic models with transport data.
-
-    Raises:
-        HTTPException: If carrier not found (404), user does not own carrier (403), or no transports found (404).
-    """
-    # Get carrier with user data for ownership check
-    result = await db.execute(
-        select(Carrier).options(selectinload(Carrier.user)).where(Carrier.id == carrier_id)
-    )
-    carrier = result.scalar_one_or_none()
-
-    # Check existence of carrier and ownership
-    if not carrier:
-        raise HTTPException(status_code=404, detail="Carrier not found")
-    if carrier.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Access denied")
-
-    # Get all transports for carrier
-    result = await db.execute(select(Transport).where(Transport.carrier_id == carrier_id))
-    transports = result.scalars().all()
-
-    # Check if transports exist
-    if not transports:
-        raise HTTPException(status_code=404, detail="No transports found for this carrier")
-
-    # Add presigned URLs for transport photos
-    for transport in transports:
-        transport.photo = generate_presigned_url(transport.photo)
-
-    # Convert to Pydantic models
-    return [TransportResponse.model_validate(transport) for transport in transports]
 
 
 async def delete_transport_service(transport_id: int, current_user: User, db: AsyncSession) -> dict:
@@ -236,3 +234,217 @@ async def upload_transport_photo_service(transport_id: int, file: UploadFile, cu
 
     # Return new photo URL
     return {"photo_url": photo_url}
+
+
+async def add_route_to_transport_service(transport_id: int, id_from: int, id_to: int, min_price: float, max_price: float, current_user: User, db: AsyncSession) -> TransportRoute:
+    """Adds a route to the transport.
+
+    Args:
+        transport_id (int): ID of the transport to add route to.
+        id_from (int): ID of the starting point.
+        id_to (int): ID of the destination point.
+        db (AsyncSession): Asynchronous database session.
+
+    Returns:
+        Transport: Updated transport instance with new route.
+
+    Raises:
+        HTTPException: If transport not found (404) or user does not own the carrier (403) or route already exists (400).
+    """
+    # Get and check ownership of transport
+    transport = await get_transport_and_validate_user(transport_id, current_user, db)
+
+    # Find the route by its starting and destination point IDs
+    route_result = await db.execute(select(Route).where(Route.id_from == id_from, Route.id_to == id_to))
+    route = route_result.scalar_one_or_none()
+
+    # If route does not exist, create a new one
+    if not route:
+        route = Route(id_from=id_from, id_to=id_to)
+        db.add(route)
+        await db.commit()
+        await db.refresh(route)
+
+    # Check if the route is already assigned to the transport
+    existing_result = await db.execute(select(TransportRoute).where(TransportRoute.transport_id == transport.id,TransportRoute.route_id == route.id))
+    existing = existing_result.scalar_one_or_none()
+
+    if existing:
+        raise HTTPException(status_code=400, detail="This route is already assigned to the transport")
+
+    # Create a new TransportRoute instance
+    transport_route = TransportRoute(
+        transport_id=transport.id,
+        route_id=route.id,
+        min_price=min_price,
+        max_price=max_price
+    )
+
+    db.add(transport_route)
+    await db.commit()
+    return transport_route
+
+
+async def get_transport_routes_service(transport_id: int, current_user: User, db: AsyncSession) -> List[TransportRoute]:
+    """Gets all routes associated with a transport.
+
+    Args:
+        transport_id (int): ID of the transport to get routes for.
+        current_user (User): The currently authenticated user.
+        db (AsyncSession): Asynchronous database session.
+
+    Returns:
+        List[TransportRoute]: List of TransportRoute instances.
+
+    Raises:
+        HTTPException: If transport not found (404) or user does not own the carrier (403) or no routes found (404).
+    """
+    # Get and check ownership of transport
+    transport = await get_transport_and_validate_user(transport_id, current_user, db)
+
+    # Get all routes for the transport
+    result = await db.execute(select(TransportRoute).where(TransportRoute.transport_id == transport.id))
+    routes = result.scalars().all()
+
+    # Check if routes exist
+    if not routes:
+        raise HTTPException(status_code=404, detail="No routes found for this transport")
+
+    return routes
+
+
+async def delete_transport_route_service(transport_id: int, route_id: int, current_user: User, db: AsyncSession) -> dict:
+    """Deletes a route from a transport.
+
+    Args:
+        transport_id (int): ID of the transport to delete route from.
+        route_id (int): ID of the route to delete.
+        current_user (User): The currently authenticated user.
+        db (AsyncSession): Asynchronous database session.
+
+    Returns:
+        dict: Message about successful deletion and deleted route ID.
+
+    Raises:
+        HTTPException: If transport not found (404) or user does not own the carrier (403) or route not found (404).
+    """
+    # Get and check ownership of transport
+    transport = await get_transport_and_validate_user(transport_id, current_user, db)
+
+    # Find the TransportRoute instance to delete
+    result = await db.execute(select(TransportRoute).where(
+        TransportRoute.transport_id == transport.id,
+        TransportRoute.route_id == route_id
+    ))
+    transport_route = result.scalar_one_or_none()
+
+    # Check if the route exists
+    if not transport_route:
+        raise HTTPException(status_code=404, detail="Route not found for this transport")
+
+    # Delete the route
+    await db.delete(transport_route)
+    await db.commit()
+
+    return {'message': 'Route successfully deleted', 'route_id': route_id}
+
+
+async def add_transport_schedule_service(payload: ScheduleCreate, current_user: User, db: AsyncSession) -> Schedule:
+    """Adds a new schedule for a transport.
+
+    Args:
+        payload (ScheduleCreate): Pydantic model with schedule data.
+        current_user (User): The currently authenticated user.
+        db (AsyncSession): Asynchronous database session.
+
+    Returns:
+        Schedule: Created schedule instance.
+
+    Raises:
+        HTTPException: If transport not found (404), user does not own the carrier (403), or schedule with these times already exists (400).
+    """
+    # Get and check ownership of transport
+    transport = await get_transport_and_validate_user(payload.transport_id, current_user, db)
+
+    # Create a new schedule instance
+    schedule = Schedule(
+        start_time=payload.start_time,
+        end_time=payload.end_time,
+        reason=payload.reason,
+        id_transport=transport.id
+    )
+
+    # Check if a schedule with the same times already exists for this transport
+    result = await db.execute(select(Schedule).where(
+        Schedule.id_transport == payload.transport_id,
+        Schedule.start_time == payload.start_time,
+        Schedule.end_time == payload.end_time
+    ))
+
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Schedule with these times already exists for this transport")
+    
+    db.add(schedule)
+    await db.commit()
+
+    return schedule
+
+
+async def get_transport_schedules_service(transport_id: int, current_user: User, db: AsyncSession) -> List[Schedule]:
+    """Gets all schedules for a transport.
+
+    Args:
+        transport_id (int): ID of the transport to get schedules for.
+        current_user (User): The currently authenticated user.
+        db (AsyncSession): Asynchronous database session.
+
+    Returns:
+        List[Schedule]: List of Schedule instances.
+
+    Raises:
+        HTTPException: If transport not found (404) or user does not own the carrier (403) or no schedules found (404).
+    """
+    # Get and check ownership of transport
+    transport = await get_transport_and_validate_user(transport_id, current_user, db)
+
+    # Get all schedules for the transport
+    result = await db.execute(select(Schedule).where(Schedule.id_transport == transport.id))
+    schedules = result.scalars().all()
+
+    # Check if schedules exist
+    if not schedules:
+        raise HTTPException(status_code=404, detail="No schedules found for this transport")
+
+    return schedules
+
+
+async def delete_transport_schedules_service(schedule_id: int, current_user: User, db: AsyncSession) -> dict:
+    """Deletes a schedule by ID.
+
+    Args:
+        schedule_id (int): ID of the schedule to delete.
+        current_user (User): The currently authenticated user.
+        db (AsyncSession): Asynchronous database session.
+
+    Returns:
+        dict: Message about successful deletion and deleted schedule ID.
+
+    Raises:
+        HTTPException: If schedule not found (404) or user does not own the carrier (403).
+    """
+    # Get the schedule by ID
+    result = await db.execute(select(Schedule).where(Schedule.id == schedule_id))
+    schedule = result.scalar_one_or_none()
+
+    # Check if the schedule exists
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    
+    # Check ownership of the transport associated with the schedule
+    await get_transport_and_validate_user(schedule.id_transport, current_user, db)
+
+    # Delete the schedule
+    await db.delete(schedule)
+    await db.commit()
+
+    return {'message': 'Schedule successfully deleted', 'schedule_id': schedule_id}

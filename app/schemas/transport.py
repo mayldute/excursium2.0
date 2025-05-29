@@ -1,8 +1,10 @@
 from typing import Optional
+from datetime import datetime, timezone
 
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 
 from app.utils import validate_transport_data
+from app.models import ScheduleReasonEnum
 
 class TransportCreate(BaseModel):
     name: str = Field(..., description="Unique name of the transport", example="Bus-123")
@@ -59,3 +61,21 @@ class TransportResponse(BaseModel):
     rating: float = Field(..., description="Average rating of the transport", example=4.5)
 
     model_config = ConfigDict(from_attributes=True)
+
+class ScheduleCreate(BaseModel):
+    transport_id: int = Field(..., description="ID of the transport for the schedule", example=1)
+    start_time: datetime = Field(..., description="Start time of the schedule in ISO format", example="2023-10-01T08:00:00Z")
+    end_time: datetime = Field(..., description="End time of the schedule in ISO format", example="2023-10-01T10:00:00Z")
+    reason: ScheduleReasonEnum = Field(..., description="Reason for the schedule", example="TECHNICAL")
+
+    @model_validator(mode="after")
+    def validate_schedule(cls, model):
+        """Validate schedule start and end times."""
+        now = datetime.now(timezone.utc)
+
+        if model.start_time < now:
+            raise ValueError("Start time cannot be in the past")
+        if model.end_time <= model.start_time:
+            raise ValueError("End time must be after start time")
+        
+        return model
