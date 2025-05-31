@@ -14,10 +14,12 @@ excursium2.0/
 │   │   ├── v1/                   # API version 1 routes
 │   │   │   ├── carrier.py        # Endpoints related to carrier functionality
 │   │   │   ├── client.py         # Endpoints related to client functionality
+│   │   │   ├── transport.py      # Endpoints related to transport functionality
 │   │   │   └── user.py           # Endpoints related to user authentication and profile
 │   │
 │   ├── core/                     # Core application configuration and setup
 │   │   ├── config.py             # Loads environment variables and application settings
+│   │   ├── constants.py          # Default-values
 │   │   └── oauth.py              # OAuth client registration for social auth (e.g., Google)
 │   │
 │   ├── db/                       # Database-related setup and utilities
@@ -46,13 +48,15 @@ excursium2.0/
 │   │   ├── __init__.py
 │   │   ├── carrier.py            # Schemas for carrier-related data
 │   │   ├── client.py             # Schemas for client-related data
+│   │   ├── transport.py          # Schemas for transport-related data
 │   │   └── user.py               # Schemas for user and auth-related data
 │   │
 │   ├── services/                 # Business logic layer (service functions)
 │   │   ├── __init__.py
 │   │   ├── carrier.py            # Logic for carrier actions and updates
 │   │   ├── client.py             # Logic for client registration, updates, etc.
-│   │   └── user.py               # Logic for user registration, login, email confirmation, etc.
+│   │   ├── transport.py          # Logic for transport add, updates, etc.
+│   │   └── user.py               # Logic for user login, email confirmation, etc.
 │   │
 │   ├── tasks/                    # Background and scheduled tasks
 │   │   └── cleanup.py            # Scheduled cleanup tasks (e.g., old records)

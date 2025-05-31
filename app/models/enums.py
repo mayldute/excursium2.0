@@ -51,3 +51,8 @@ class PaymentStatusEnum (str, enum.Enum):
     PENDING = "PENDING" #Pending
     PAID = "PAID" #Paid
     FAILED = "FAILED" #Failed
+
+class ScheduleReasonEnum(str, enum.Enum):
+    TECHNICAL = "TECHNICAL" #Technical reasons
+    ORDER = "ORDER" #Order
+    

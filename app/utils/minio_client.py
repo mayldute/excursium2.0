@@ -138,3 +138,27 @@ def delete_photo_from_minio(object_name: str) -> None:
         )
     except Exception as e:
         logger.warning(f"Error deleting photo from MinIO: {e}")
+
+
+async def upload_transport_photo_to_minio(file: UploadFile, transport_id: int) -> str:
+    """Upload a transport photo to MinIO and return the generated object name.
+
+    Args:
+        file (UploadFile): The photo file to upload.
+        transport_id (int): The ID of the transport associated with the photo.
+
+    Returns:
+        str: The object name in MinIO (e.g., 'transport_photos/<user_id>_<uuid>.<ext>').
+
+    Raises:
+        S3Error: If the upload to MinIO fails due to server issues or invalid configuration.
+        ValueError: If the file has no extension.
+    """
+    # Generate object name with user ID and UUID
+    file_ext = file.filename.split(".")[-1]
+    if not file_ext:
+        raise ValueError("File has no extension")
+    object_name = f"transport_photos/{transport_id}_{uuid4().hex}.{file_ext}"
+
+    # Upload file to MinIO
+    return await upload_file_to_minio(file, object_name)

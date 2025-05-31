@@ -4,6 +4,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.core.config import settings
 from app.api.v1.client import router as client_router
 from app.api.v1.carrier import router as carrier_router
+from app.api.v1.transport import router as transport_router
 from app.api.v1.user import router as user_router
 from app.tasks.cleanup import (
     delete_unactivated_users, 
@@ -19,6 +20,7 @@ app = FastAPI(debug=settings.app.debug)
 app.include_router(client_router)
 app.include_router(carrier_router)
 app.include_router(user_router)
+app.include_router(transport_router)
 
 # Initialize and configure scheduler for background tasks
 scheduler = AsyncIOScheduler()

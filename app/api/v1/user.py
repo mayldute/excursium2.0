@@ -107,7 +107,7 @@ async def activate_email_change(
     return await confirm_email_change(token, db)
 
 
-@router.post("/upload-photo")
+@router.post("/upload-photo", summary="Upload user photo", status_code=200)
 async def upload_photo(
     file: UploadFile = File(...),
     context: CommonContext = Depends(get_common_context)

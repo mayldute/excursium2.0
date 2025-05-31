@@ -20,8 +20,6 @@ from app.services.client import (
     complete_social_registration
 )
 
-import logging
-
 # Initialize API router for client routes
 router = APIRouter(prefix="/auth", tags=["[auth] client"])
 

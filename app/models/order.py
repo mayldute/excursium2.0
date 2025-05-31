@@ -21,7 +21,8 @@ class Order(Base):
     notification_sent: Mapped[bool] = mapped_column(Boolean, default=False)
     payment_status: Mapped[PaymentStatusEnum] = mapped_column(Enum(PaymentStatusEnum), nullable=False)
     payment_method: Mapped[PaymentMethodEnum] = mapped_column(Enum(PaymentMethodEnum), nullable=False)
-    price: Mapped[int] = mapped_column(Integer, nullable=False)
+    price: Mapped[int] = mapped_column(Integer, nullable=True)
+    is_accepted: Mapped[bool] = mapped_column(Boolean, default=False)
 
     comment: Mapped["Comment"] = relationship("Comment", back_populates="order", uselist=False)
     extra_services: Mapped[list["ExtraService"]] = relationship("ExtraService", back_populates="order", lazy='dynamic', uselist=True)

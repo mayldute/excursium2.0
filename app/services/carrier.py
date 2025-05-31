@@ -16,7 +16,8 @@ from app.models import (
 from app.schemas import (
     CarrierCreate, 
     CarrierUpdate, 
-    CarrierDocsResponse
+    CarrierResponse,
+    CarrierDocsResponse,
 )
 
 from app.utils import (
@@ -28,15 +29,7 @@ from app.utils import (
 )
 
 from app.core.config import settings
-
-# Allowed MIME types for document uploads
-ALLOWED_DOC_TYPES: set[str] = {
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "image/jpeg",
-    "image/png"
-}
+from app.core.constants import ALLOWED_DOC_TYPES
 
 async def get_owned_carrier_or_403(carrier_id: int, current_user: User, db: AsyncSession) -> Carrier:
     """Fetch a carrier by ID and verify user ownership.
@@ -126,7 +119,7 @@ async def register_carrier_service(payload: CarrierCreate, db: AsyncSession) -> 
     }
 
 
-async def get_carrier_service(carrier_id: int, current_user: User, db: AsyncSession) -> Carrier:
+async def get_carrier_service(carrier_id: int, current_user: User, db: AsyncSession) -> CarrierResponse:
     """Retrieve a carrier by ID, including the user's photo URL.
 
     Args:
@@ -149,10 +142,10 @@ async def get_carrier_service(carrier_id: int, current_user: User, db: AsyncSess
     photo_url = generate_presigned_url(carrier.user.photo)
     carrier.user.photo = photo_url
 
-    return carrier
+    return CarrierResponse.model_validate(carrier)
 
 
-async def update_carrier_service(carrier_id: int, payload: CarrierUpdate, current_user: User, db: AsyncSession) -> Carrier:
+async def update_carrier_service(carrier_id: int, payload: CarrierUpdate, current_user: User, db: AsyncSession) -> CarrierResponse:
     """Update carrier and associated user information.
 
     Args:
@@ -187,7 +180,7 @@ async def update_carrier_service(carrier_id: int, payload: CarrierUpdate, curren
     db.add(carrier)
     await db.commit()
 
-    return carrier
+    return CarrierResponse.model_validate(carrier)
 
 
 async def delete_carrier_service(carrier_id: int, current_user: User, db:AsyncSession) -> dict:
@@ -302,4 +295,4 @@ async def get_carrier_docs_service(carrier_id: int, current_user: User, db: Asyn
     for doc, doc_url in zip(docs, docs_urls):
         doc.file_path = doc_url
 
-    return [CarrierDocsResponse.from_orm(doc) for doc in docs]
+    return [CarrierDocsResponse.model_validate(doc) for doc in docs]

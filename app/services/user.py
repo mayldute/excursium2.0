@@ -29,13 +29,7 @@ from app.utils import (
 
 
 from app.core.config import settings
-
-# Allowed MIME types for user photo uploads
-ALLOWED_IMAGE_TYPES: set[str] = {
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-}
+from app.core.constants import ALLOWED_IMAGE_TYPES
 
 async def save_user(user: User, db: AsyncSession) -> None:
     """Save a user to the database.
@@ -78,7 +72,6 @@ async def authenticate_user(email: str, password: str, db: AsyncSession) -> dict
     
     if not user.is_active:
         raise HTTPException(403, "Please activate your account")
-
     
     # Generate and return tokens
     return await get_tokens_for_user(user, db)
