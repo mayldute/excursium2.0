@@ -15,11 +15,11 @@ class Order(Base):
     __tablename__ = 'orders'
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    status: Mapped[OrderStatusEnum] = mapped_column(Enum(OrderStatusEnum), nullable=False)
+    status: Mapped[OrderStatusEnum] = mapped_column(Enum(OrderStatusEnum), nullable=False, default=OrderStatusEnum.NEW)
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
     passenger_type: Mapped[PassengerTypeEnum] = mapped_column(Enum(PassengerTypeEnum), nullable=False)
     notification_sent: Mapped[bool] = mapped_column(Boolean, default=False)
-    payment_status: Mapped[PaymentStatusEnum] = mapped_column(Enum(PaymentStatusEnum), nullable=False)
+    payment_status: Mapped[PaymentStatusEnum] = mapped_column(Enum(PaymentStatusEnum), nullable=False, default=PaymentStatusEnum.PENDING)
     payment_method: Mapped[PaymentMethodEnum] = mapped_column(Enum(PaymentMethodEnum), nullable=False)
     price: Mapped[int] = mapped_column(Integer, nullable=True)
     is_accepted: Mapped[bool] = mapped_column(Boolean, default=False)

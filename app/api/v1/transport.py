@@ -1,14 +1,18 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, UploadFile, File
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas import (
     TransportCreate,
     TransportUpdate,
     TransportResponse,
     ScheduleCreate,
+    TransportFilter,
+    TransportFilterResponse,
 )
 
+from app.dependencies.get_db import get_db
 from app.dependencies.context import get_common_context, CommonContext
 from app.services.transport import (
     create_transport_service,
@@ -22,10 +26,30 @@ from app.services.transport import (
     add_transport_schedule_service,
     get_transport_schedules_service,
     delete_transport_schedules_service,
+    filter_transports_service,
+    get_transport_by_id_service,
 )
 
 # Initialize API router for transport routes
 router = APIRouter(prefix="/transport", tags=["[transport] transport"])
+
+@router.get("/search", response_model=List[TransportFilterResponse], summary="Search transports", status_code=200)
+async def search_transports(
+    filters: TransportFilter = Depends(),
+    db: AsyncSession = Depends(get_db),
+):
+    # Search transports based on provided filters
+    return await filter_transports_service(filters, db)
+
+
+@router.get("/search/{transport_id}", response_model=TransportFilterResponse, summary="Search transports by carrier ID", status_code=200)
+async def search_transport_by_id(
+    transport_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    # Fetch transport by ID using the service
+    return await get_transport_by_id_service(transport_id, db)
+
 
 @router.post("/create", response_model=TransportResponse, summary="Create new transport", status_code=201)
 async def create_trancport(

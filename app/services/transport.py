@@ -3,12 +3,163 @@ from typing import List
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload, DeclarativeBase
+from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy import asc, desc
 
 from app.models import Transport, User, Carrier, Route, TransportRoute,  Schedule
-from app.schemas import TransportCreate, TransportUpdate, TransportResponse, ScheduleCreate
+from app.schemas import (
+    TransportCreate, 
+    TransportUpdate, 
+    TransportResponse, 
+    ScheduleCreate, 
+    TransportFilter,
+    TransportFilterResponse
+)
+
 from app.utils import generate_presigned_url, upload_transport_photo_to_minio, delete_photo_from_minio
 from app.core.constants import ALLOWED_IMAGE_TYPES
+
+# Mapping of sort fields to model attributes
+SORT_FIELD_MAP = {
+    "rating": Transport.rating,
+    "price": TransportRoute.min_price,
+}
+
+async def filter_transports_service(filters: TransportFilter, db: AsyncSession) -> List[TransportFilterResponse]:
+    """
+    Filters transports based on various criteria, excluding transports that are busy during the requested time.
+
+    Args:
+        filters (TransportFilter): Pydantic model with filter criteria.
+        db (AsyncSession): Asynchronous database session.
+
+    Returns:
+        List[TransportFilterResponse]: List of filtered transports.
+
+    Raises:
+        HTTPException: If no transports found matching the criteria (404).
+    """
+    sort_field = SORT_FIELD_MAP.get(filters.sort_by, Transport.rating)
+    order_func = desc if filters.sort_order == "desc" else asc
+
+    # Subquery to exclude transports with overlapping schedules
+    subq = (
+        select(Schedule.id_transport)
+        .where(
+            ~(
+                (Schedule.end_time <= filters.start_time) |
+                (Schedule.start_time >= filters.end_time)
+            )
+        )
+        .subquery()
+    )
+
+    # Build main query
+    query = (
+        select(Transport, TransportRoute)
+        .join(Transport.transport_routes)
+        .join(TransportRoute.route)
+        .where(
+            # Filter by route IDs
+            Route.id_from == filters.id_from,
+            Route.id_to == filters.id_to,
+
+            # Filter by seat count
+            Transport.n_seat >= filters.n_seat,
+
+            # Filter by price range
+            TransportRoute.min_price >= filters.min_price,
+            TransportRoute.max_price <= filters.max_price,
+
+            # Exclude busy transports
+            ~Transport.id.in_(select(subq.c.id_transport)),
+
+            # Optional filters
+            *(Transport.luggage == filters.luggage,) if filters.luggage is not None else (),
+            *(Transport.wifi == filters.wifi,) if filters.wifi is not None else (),
+            *(Transport.tv == filters.tv,) if filters.tv is not None else (),
+            *(Transport.air_conditioning == filters.air_conditioning,) if filters.air_conditioning is not None else (),
+            *(Transport.toilet == filters.toilet,) if filters.toilet is not None else (),
+        )
+        .order_by(order_func(sort_field))
+        .options(
+            joinedload(Transport.carrier),
+            joinedload(Transport.transport_routes)
+        )
+    )
+
+    result = await db.execute(query)
+    rows = result.unique().all()  
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="No transports found matching the filters")
+
+    # Manually unpack and build response
+    responses = []
+    for transport, transport_route in rows:
+        responses.append(
+            TransportFilterResponse(
+                id=transport.id,
+                carrier_id=transport.carrier_id,
+                brand=transport.brand,
+                model=transport.model,
+                n_seat=transport.n_seat,
+                luggage=transport.luggage,
+                wifi=transport.wifi,
+                tv=transport.tv,
+                air_conditioning=transport.air_conditioning,
+                toilet=transport.toilet,
+                photo=transport.photo,
+                rating=transport.rating,
+                min_price=transport_route.min_price,
+                max_price=transport_route.max_price,
+            )
+        )
+
+    return responses
+
+
+async def get_transport_by_id_service(transport_id: int, db: AsyncSession) -> TransportFilterResponse:
+    """Retrieves a transport by its ID.
+
+    Args:
+        transport_id (int): ID of the transport to retrieve.
+        db (AsyncSession): Asynchronous database session.
+
+    Returns:
+        Transport: Transport instance if found.
+
+    Raises:
+        HTTPException: If transport does not exist (404).
+    """
+    result = await db.execute(
+        select(Transport, TransportRoute)
+        .join(Transport.transport_routes)
+        .where(Transport.id == transport_id)
+    )
+    row = result.first()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Transport not found")
+
+    transport, transport_route = row
+
+    return TransportFilterResponse(
+        id=transport.id,
+        carrier_id=transport.carrier_id,
+        brand=transport.brand,
+        model=transport.model,
+        n_seat=transport.n_seat,
+        luggage=transport.luggage,
+        wifi=transport.wifi,
+        tv=transport.tv,
+        air_conditioning=transport.air_conditioning,
+        toilet=transport.toilet,
+        photo=transport.photo,
+        rating=transport.rating,
+        min_price=transport_route.min_price,
+        max_price=transport_route.max_price,
+    )
 
 async def get_transport_and_validate_user(transport_id: int, current_user: User, db: AsyncSession) -> Transport:
     """Gets transport by ID and checks that the current user owns the associated carrier.
@@ -80,7 +231,6 @@ async def create_transport_service(payload: TransportCreate, current_user: User,
         brand=payload.brand,
         model=payload.model,
         year=payload.year,
-        n_desk=payload.n_desk,
         n_seat=payload.n_seat,
         photo="transport_photos/default_bus.jpg",  # Set default photo
         luggage=payload.luggage,

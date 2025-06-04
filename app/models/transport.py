@@ -13,7 +13,6 @@ class Transport(Base):
     brand: Mapped[str] = mapped_column(String(50))
     model: Mapped[str] = mapped_column(String(50))
     year: Mapped[int] = mapped_column(Integer)
-    n_desk: Mapped[int] = mapped_column(Integer)
     n_seat: Mapped[int] = mapped_column(Integer)
     photo: Mapped[str | None] = mapped_column(String, nullable=True)
     luggage: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -26,7 +25,7 @@ class Transport(Base):
     carrier_id: Mapped[int] = mapped_column(Integer, ForeignKey("carriers.id", ondelete="CASCADE"))
     carrier: Mapped["Carrier"] = relationship(back_populates="transports")
     orders: Mapped[list["Order"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
-    schedules: Mapped[list["Schedule"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
+    schedules: Mapped[list["Schedule"]] = relationship(back_populates="transport", uselist=True)
     comments: Mapped[list["Comment"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
     transport_routes: Mapped[list["TransportRoute"]] = relationship(back_populates="transport",cascade="all, delete-orphan")
 

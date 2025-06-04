@@ -140,9 +140,6 @@ def validate_transport_data(values: dict) -> None:
         year = values.get("year")
         if year is not None and (not isinstance(year, int) or year < 1000 or year > 9999):
             raise ValueError("Year must be a valid 4-digit number.")
-        
-        if "n_desk" in values and values["n_desk"] is not None and values["n_desk"] <= 0:
-            raise ValueError("Number of desks must be a positive integer.")
     
         if "n_seat" in values and values["n_seat"] is not None and values["n_seat"] <= 0:
             raise ValueError("Number of seats must be a positive integer.")

@@ -6,7 +6,6 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.db.base import Base
 from app.models.enums import ClientTypeEnum, LegalTypeEnum
 
-
 class User(Base):
     __tablename__ = "users"
 
