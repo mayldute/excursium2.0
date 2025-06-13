@@ -2,14 +2,17 @@ def validate_individual_client(user: dict, legal_type: str | None) -> None:
     """Validate fields for an individual client.
 
     Args:
-        user (dict): Dictionary containing user data (e.g., first_name, last_name, phone_number).
-        legal_type (Optional[str]): The legal type of the client, expected to be None for individual clients.
+        user (dict): Dictionary containing user data
+            (e.g., first_name, last_name, phone_number).
+        legal_type (Optional[str]): The legal type of the client, expected to be
+            None for individual clients.
 
     Returns:
         None
 
-    Raises:
-        ValueError: If required user fields are missing or legal_type is not None.
+     Raises:
+        ValueError: If required user fields are missing or legal_type
+            is not None.
     """
     # Check required user fields
     required_user_fields = ['first_name', 'last_name', 'phone_number']
@@ -26,13 +29,15 @@ def validate_legal_minimal(values: dict) -> None:
     """Validate minimal required fields for a legal entity during registration.
 
     Args:
-        values (dict): Dictionary containing legal entity data (e.g., company_name, inn, kpp, legal_type).
+        values (dict): Dictionary containing legal entity data
+            (e.g., company_name, inn, kpp, legal_type).
 
     Returns:
         None
 
     Raises:
-        ValueError: If required fields are missing, INN/KPP lengths are invalid, or custom_type is missing for 'OTH' legal type.
+        ValueError: If required fields are missing, INN/KPP lengths are invalid,
+            or custom_type is missing for 'OTH' legal type.
     """
     # Check required fields
     required_fields = ["company_name", "inn", "kpp", "legal_type"]
@@ -45,7 +50,7 @@ def validate_legal_minimal(values: dict) -> None:
     custom_type = values.get("custom_type")
     if legal_type == "OTH" and not custom_type:
         raise ValueError("Custom type is required when legal_type is 'OTH'.")
-    
+
     # Validate INN length
     inn = values.get("inn", "")
     if legal_type == "IE" and len(inn) != 12:
@@ -60,16 +65,18 @@ def validate_legal_minimal(values: dict) -> None:
 
 
 def validate_legal_entity(values: dict) -> None:
-    """Validate fields for a legal entity, including extended fields like OGRN and bank accounts.
+    """Validate fields for a legal entity, including extended fields like OGRN
+    and bank accounts.
 
     Args:
-        values (dict): Dictionary containing legal entity data (e.g., legal_type, inn, kpp, ogrn, bank details).
+        values (dict): Dictionary containing legal entity data
+            (e.g., legal_type, inn, kpp, ogrn, bank details).
 
     Returns:
         None
 
     Raises:
-        ValueError: If fields have invalid lengths, formats, or values (e.g., missing custom_type for 'OTH', invalid account formats).
+        ValueError: If fields have invalid lengths, formats, or values.
     """
     # Validate legal type and custom type
     legal_type = values.get("legal_type")
@@ -78,7 +85,7 @@ def validate_legal_entity(values: dict) -> None:
     if legal_type == "OTH" and not custom_type:
         raise ValueError("Custom type is required when legal_type is 'OTH'.")
 
-    def check_length(field_value, expected_len, field_name)-> None:
+    def check_length(field_value, expected_len, field_name) -> None:
         """Check if a field value has the expected length, if provided.
 
         Args:
@@ -90,10 +97,13 @@ def validate_legal_entity(values: dict) -> None:
             None
 
         Raises:
-            ValueError: If the field value is provided and does not match the expected length.
+            ValueError: If the field value is provided and does not match
+                the expected length.
         """
         if field_value and len(field_value) != expected_len:
-            raise ValueError(f"{field_name} must be {expected_len} characters long.")
+            raise ValueError(
+                f"{field_name} must be {expected_len} characters long."
+            )
 
     # Validate INN length
     inn = values.get("inn")
@@ -112,34 +122,48 @@ def validate_legal_entity(values: dict) -> None:
     # Validate correspondent account
     corresp_account = values.get("corresp_account")
     bik = values.get("bik")
-    
+
     if corresp_account:
         check_length(corresp_account, 20, "Correspondent account")
         if not corresp_account.startswith("30101"):
             raise ValueError("Correspondent account must start with '30101'.")
         if bik and corresp_account[-3:] != bik[-3:]:
-            raise ValueError("Last 3 digits of correspondent account must match BIK.")
+            raise ValueError(
+                "Last 3 digits of correspondent account must match BIK."
+            )
 
     # Validate OKTMO
     oktmo = values.get("oktmo")
     if oktmo and len(oktmo) not in [8, 11]:
         raise ValueError("OKTMO must be 8 or 11 characters long.")
-    
+
 
 def validate_transport_data(values: dict) -> None:
-        """Validate transport data for creation or update.
-        Args:
-            values (dict): Dictionary containing transport data (e.g., name, brand, model, year, n_desk, n_seat).
-        
-        Returns:
-            None
-            
-        Raises:
-            ValueError: If year is not a valid 4-digit number, or if n_desk or n_seat are not positive integers.
-        """
-        year = values.get("year")
-        if year is not None and (not isinstance(year, int) or year < 1000 or year > 9999):
-            raise ValueError("Year must be a valid 4-digit number.")
-    
-        if "n_seat" in values and values["n_seat"] is not None and values["n_seat"] <= 0:
-            raise ValueError("Number of seats must be a positive integer.")
+    """Validate transport data for creation or update.
+
+    Args:
+        values (dict): Dictionary containing transport data
+            (e.g., name, brand, model, year, n_desk, n_seat).
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If year is not a valid 4-digit number, or if n_desk or
+            n_seat are not positive integers.
+    """
+    year = values.get("year")
+
+    # Validate year
+    if (
+        year is not None and not isinstance(year, int)
+        or year < 1000 or year > 9999
+    ):
+        raise ValueError("Year must be a valid 4-digit number.")
+
+    # Validate number of seats
+    if (
+        "n_seat" in values and values["n_seat"] is not None
+        and values["n_seat"] <= 0
+    ):
+        raise ValueError("Number of seats must be a positive integer.")

@@ -11,6 +11,7 @@ from app.core.config import settings
 # Logger for email-related operations
 logger = logging.getLogger(__name__)
 
+
 def _send_email_sync(to: str, subject: str, body: str) -> None:
     """Send an email synchronously using SMTP over SSL.
 
@@ -23,7 +24,8 @@ def _send_email_sync(to: str, subject: str, body: str) -> None:
         None
 
     Raises:
-        smtplib.SMTPException: If the email sending fails due to SMTP server issues.
+        smtplib.SMTPException: If the email sending fails due
+            to SMTP server issues.
     """
     # Create email message
     message = MIMEMultipart()
@@ -34,12 +36,17 @@ def _send_email_sync(to: str, subject: str, body: str) -> None:
 
     # Connect to SMTP server and send email
     try:
-        with smtplib.SMTP_SSL(settings.smtp.smtp_server, int(settings.smtp.smtp_port)) as server:
-            server.login(settings.smtp.smtp_username, settings.smtp.smtp_password)
+        with smtplib.SMTP_SSL(
+            settings.smtp.smtp_server, int(settings.smtp.smtp_port)
+        ) as server:
+            server.login(
+                settings.smtp.smtp_username, settings.smtp.smtp_password
+            )
             server.send_message(message)
     except smtplib.SMTPException as e:
         logger.error(f"Failed to send email to {to}: {e}")
         raise
+
 
 async def send_email(to: str, subject: str, body: str) -> None:
     """Send an email asynchronously without blocking the event loop.
@@ -53,9 +60,11 @@ async def send_email(to: str, subject: str, body: str) -> None:
         None
 
     Raises:
-        smtplib.SMTPException: If the email sending fails due to SMTP server issues.
+        smtplib.SMTPException: If the email sending fails due
+            to SMTP server issues.
     """
     # Run synchronous email sending in executor
     loop = asyncio.get_running_loop()
-    await loop.run_in_executor(None, partial(_send_email_sync, to, subject, body))
-
+    await loop.run_in_executor(
+        None, partial(_send_email_sync, to, subject, body)
+    )

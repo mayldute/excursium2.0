@@ -1,4 +1,15 @@
-from sqlalchemy import Integer, String, Boolean, DateTime, Float, func, ForeignKey, UniqueConstraint, Enum
+from sqlalchemy import (
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    Float,
+    func,
+    ForeignKey,
+    UniqueConstraint,
+    Enum
+)
+
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base import Base
@@ -22,12 +33,22 @@ class Transport(Base):
     toilet: Mapped[bool] = mapped_column(Boolean, default=False)
     rating: Mapped[float] = mapped_column(Float, default=0.0)
 
-    carrier_id: Mapped[int] = mapped_column(Integer, ForeignKey("carriers.id", ondelete="CASCADE"))
+    carrier_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("carriers.id", ondelete="CASCADE")
+    )
     carrier: Mapped["Carrier"] = relationship(back_populates="transports")
-    orders: Mapped[list["Order"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
-    schedules: Mapped[list["Schedule"]] = relationship(back_populates="transport", uselist=True)
-    comments: Mapped[list["Comment"]] = relationship(back_populates="transport", lazy='dynamic', uselist=True)
-    transport_routes: Mapped[list["TransportRoute"]] = relationship(back_populates="transport",cascade="all, delete-orphan")
+    orders: Mapped[list["Order"]] = relationship(
+        back_populates="transport", lazy='dynamic', uselist=True
+    )
+    schedules: Mapped[list["Schedule"]] = relationship(
+        back_populates="transport", uselist=True
+    )
+    comments: Mapped[list["Comment"]] = relationship(
+        back_populates="transport", lazy='dynamic', uselist=True
+    )
+    transport_routes: Mapped[list["TransportRoute"]] = relationship(
+        back_populates="transport", cascade="all, delete-orphan"
+    )
 
     @staticmethod
     def update_transport_rating(db, transport_id: int):
@@ -40,34 +61,58 @@ class Transport(Base):
 
         db.commit()
 
+
 class Route(Base):
     __tablename__ = 'routes'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    id_from: Mapped[int] = mapped_column(Integer, ForeignKey("cities.id"), nullable=False)
-    id_to: Mapped[int] = mapped_column(Integer, ForeignKey("cities.id"), nullable=False)
-
-    from_city: Mapped["City"] = relationship(back_populates="routes_from", foreign_keys=[id_from])
-    to_city: Mapped["City"] = relationship(back_populates="routes_to", foreign_keys=[id_to])
-    orders: Mapped[list["Order"]] = relationship(back_populates="route", lazy='dynamic', uselist=True)
-    schedules: Mapped[list["Schedule"]] = relationship(back_populates="route", lazy='dynamic', uselist=True)
-    transport_routes: Mapped[list["TransportRoute"]] = relationship(back_populates="route", cascade="all, delete-orphan")
+    id_from: Mapped[int] = mapped_column(
+        Integer, ForeignKey("cities.id"), nullable=False
+    )
+    id_to: Mapped[int] = mapped_column(
+        Integer, ForeignKey("cities.id"), nullable=False
+    )
+    from_city: Mapped["City"] = relationship(
+        back_populates="routes_from", foreign_keys=[id_from]
+    )
+    to_city: Mapped["City"] = relationship(
+        back_populates="routes_to", foreign_keys=[id_to]
+    )
+    orders: Mapped[list["Order"]] = relationship(
+        back_populates="route", lazy='dynamic', uselist=True
+    )
+    schedules: Mapped[list["Schedule"]] = relationship(
+        back_populates="route", lazy='dynamic', uselist=True
+    )
+    transport_routes: Mapped[list["TransportRoute"]] = relationship(
+        back_populates="route", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         UniqueConstraint("id_from", "id_to", name="uq_route_from_to"),
     )
 
-class TransportRoute(Base): 
+
+class TransportRoute(Base):
     __tablename__ = 'transport_routes'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     min_price: Mapped[float] = mapped_column(Float)
     max_price: Mapped[float] = mapped_column(Float)
 
-    route_id: Mapped[int] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"), nullable=False)
-    transport_id: Mapped[int] = mapped_column(Integer, ForeignKey("transports.id", ondelete="CASCADE"), nullable=False)
-    route: Mapped["Route"] = relationship("Route", back_populates="transport_routes")
-    transport: Mapped["Transport"] = relationship("Transport", back_populates="transport_routes")
+    route_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("routes.id", ondelete="CASCADE"), nullable=False
+    )
+    transport_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("transports.id", ondelete="CASCADE"), nullable=False
+    )
+    route: Mapped["Route"] = relationship(
+        "Route", back_populates="transport_routes"
+    )
+    transport: Mapped["Transport"] = relationship(
+        "Transport", back_populates="transport_routes"
+    )
+
 
 class Schedule(Base):
     __tablename__ = 'schedules'
@@ -75,9 +120,17 @@ class Schedule(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime(timezone=True))
     end_time: Mapped[DateTime] = mapped_column(DateTime(timezone=True))
-    reason : Mapped[ScheduleReasonEnum] = mapped_column(Enum(ScheduleReasonEnum), nullable=False, default=ScheduleReasonEnum.TECHNICAL)
+    reason : Mapped[ScheduleReasonEnum] = mapped_column(
+        Enum(ScheduleReasonEnum),
+        nullable=False,
+        default=ScheduleReasonEnum.TECHNICAL
+    )
 
-    id_transport: Mapped[int] = mapped_column(Integer, ForeignKey('transports.id', ondelete="CASCADE"))
+    id_transport: Mapped[int] = mapped_column(
+        Integer, ForeignKey('transports.id', ondelete="CASCADE")
+    )
     transport: Mapped["Transport"] = relationship(back_populates="schedules")
-    route_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("routes.id", ondelete="CASCADE"), nullable=True)
+    route_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("routes.id", ondelete="CASCADE"), nullable=True
+    )
     route: Mapped["Route"] = relationship(back_populates="schedules")

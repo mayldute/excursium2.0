@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timezone, timedelta
 
-from sqlalchemy import select, delete
+from sqlalchemy import delete, false
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.models import User, ChangeEmail, OAuthState
@@ -9,6 +9,7 @@ from app.db.session import async_session_maker
 
 # Logger for cleanup task operations
 logger = logging.getLogger(__name__)
+
 
 async def delete_unactivated_users() -> None:
     """Delete users who have not activated their accounts within 24 hours.
@@ -27,7 +28,7 @@ async def delete_unactivated_users() -> None:
         # Execute mass deletion of unactivated users
         result = await session.execute(
             delete(User).where(
-                User.is_active == False,
+                User.is_active.is_(false()),
                 User.created_at < cutoff
             ).returning(User.id)  # Return the IDs of deleted users for logging
         )
@@ -63,7 +64,7 @@ async def delete_deleted_users() -> None:
         # Execute mass deletion of deleted users
         result = await session.execute(
             delete(User).where(
-                User.is_active == False,
+                User.is_active.is_(false()),
                 User.deleted_at < cutoff
             ).returning(User.id)  # Return the IDs of deleted users for logging
         )
@@ -78,7 +79,9 @@ async def delete_deleted_users() -> None:
         try:
             await session.commit()
         except SQLAlchemyError as e:
-            logger.error(f"Failed to commit deletion of permanently deleted users: {e}")
+            logger.error(
+                f"Failed to commit deletion of permanently deleted users: {e}"
+            )
             raise
 
 
@@ -100,7 +103,9 @@ async def delete_unchanged_emails() -> None:
         result = await session.execute(
             delete(ChangeEmail).where(
                 ChangeEmail.expires_at < cutoff
-            ).returning(ChangeEmail.id)  # Return the IDs of deleted email requests for logging
+            ).returning(
+                ChangeEmail.id
+            )  # Return the IDs of deleted email requests for logging
         )
         emails_to_delete = result.scalars().all()
         count_to_delete = len(emails_to_delete)
@@ -113,7 +118,9 @@ async def delete_unchanged_emails() -> None:
         try:
             await session.commit()
         except SQLAlchemyError as e:
-            logger.error(f"Failed to commit deletion of unchanged email requests: {e}")
+            logger.error(
+                f"Failed to commit deletion of unchanged email requests: {e}"
+            )
             raise
 
 
@@ -122,7 +129,7 @@ async def delete_oauth_state() -> None:
 
     Returns:
         None
-    
+
     Raises:
         SQLAlchemyError: If a database operation fails during query or deletion.
     """
@@ -135,7 +142,9 @@ async def delete_oauth_state() -> None:
         result = await session.execute(
             delete(OAuthState).where(
                 OAuthState.expires_at < cutoff
-            ).returning(OAuthState.id) # Return the IDs of deleted OAuth states for logging
+            ).returning(
+                OAuthState.id
+            )  # Return the IDs of deleted OAuth states for logging
         )
         states_to_delete = result.scalars().all()
         count_to_delete = len(states_to_delete)

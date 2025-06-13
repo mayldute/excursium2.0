@@ -8,28 +8,28 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.models import (
-    User, 
-    RefreshToken, 
-    ChangeEmail, 
+    User,
+    ChangeEmail,
     RefreshToken
 )
 
 from app.utils import (
-    verify_password, 
-    hash_password, 
-    send_email, 
-    upload_photo_to_minio, 
+    verify_password,
+    hash_password,
+    send_email,
+    upload_photo_to_minio,
     delete_photo_from_minio,
-    SECRET_KEY, 
-    ALGORITHM, 
-    create_access_token, 
-    get_tokens_for_user, 
+    SECRET_KEY,
+    ALGORITHM,
+    create_access_token,
+    get_tokens_for_user,
     create_email_change_token
 )
 
 
 from app.core.config import settings
 from app.core.constants import ALLOWED_IMAGE_TYPES
+
 
 async def save_user(user: User, db: AsyncSession) -> None:
     """Save a user to the database.
@@ -45,8 +45,11 @@ async def save_user(user: User, db: AsyncSession) -> None:
     await db.commit()
 
 
-async def authenticate_user(email: str, password: str, db: AsyncSession) -> dict:
-    """Authenticate a user by email and password, returning access and refresh tokens.
+async def authenticate_user(
+    email: str, password: str, db: AsyncSession
+) -> dict:
+    """Authenticate a user by email and password,
+        returning access and refresh tokens.
 
     Args:
         email (str): The user's email address.
@@ -57,7 +60,8 @@ async def authenticate_user(email: str, password: str, db: AsyncSession) -> dict
         dict: A dictionary containing access and refresh tokens.
 
     Raises:
-        HTTPException: If credentials are invalid (401), or the user is not active (403).
+        HTTPException: If credentials are invalid (401),
+            or the user is not active (403).
     """
     # Fetch user by email
     result = await db.execute(select(User).where(User.email == email))
@@ -65,14 +69,16 @@ async def authenticate_user(email: str, password: str, db: AsyncSession) -> dict
 
     # Verify credentials
     if user.is_oauth_user:
-        raise HTTPException(status_code=400, detail="Please login with social account.")
+        raise HTTPException(
+            status_code=400, detail="Please login with social account."
+        )
 
     if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     if not user.is_active:
         raise HTTPException(403, "Please activate your account")
-    
+
     # Generate and return tokens
     return await get_tokens_for_user(user, db)
 
@@ -88,13 +94,20 @@ async def logout_user(refresh_token: str, db: AsyncSession) -> dict:
         dict: A dictionary with a success message.
     """
     # Remove refresh token
-    await db.execute(delete(RefreshToken).where(RefreshToken.token == refresh_token))
-    await db.commit() 
+    await db.execute(
+        delete(RefreshToken).where(RefreshToken.token == refresh_token)
+    )
+    await db.commit()
 
     return {"message": "Logout successful"}
 
 
-async def change_user_password(user: User, old_password: str, new_password:str, db:AsyncSession) -> dict:
+async def change_user_password(
+    user: User,
+    old_password: str,
+    new_password: str,
+    db: AsyncSession
+) -> dict:
     """Change a user's password after verifying the old password.
 
     Args:
@@ -112,7 +125,7 @@ async def change_user_password(user: User, old_password: str, new_password:str, 
     # Verify old password
     if not verify_password(old_password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     # Update password and save
     user.hashed_password = hash_password(new_password)
     await save_user(user, db=db)
@@ -131,7 +144,8 @@ async def refresh_user_token(refresh_token: str, db: AsyncSession) -> dict:
         dict: A dictionary containing a new access token.
 
     Raises:
-        HTTPException: If the token is invalid (401), expired (401), or the user is not found (404).
+        HTTPException: If the token is invalid (401), expired (401),
+            or the user is not found (404).
     """
     # Decode and validate refresh token
     try:
@@ -140,14 +154,20 @@ async def refresh_user_token(refresh_token: str, db: AsyncSession) -> dict:
             raise HTTPException(status_code=401, detail="Invalid token type")
         user_id = int(payload.get("sub"))
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+        raise HTTPException(
+            status_code=401, detail="Invalid or expired refresh token"
+        )
 
     # Verify stored token
-    result = await db.execute(select(RefreshToken).where(RefreshToken.token == refresh_token))
+    result = await db.execute(
+        select(RefreshToken).where(RefreshToken.token == refresh_token)
+    )
     stored_token = result.scalar_one_or_none()
 
     if not stored_token or stored_token.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=401, detail="Refresh token expired or not found")
+        raise HTTPException(
+            status_code=401, detail="Refresh token expired or not found"
+        )
 
     # Fetch user
     user = await db.get(User, user_id)
@@ -158,7 +178,7 @@ async def refresh_user_token(refresh_token: str, db: AsyncSession) -> dict:
     user_data = {"sub": str(user.id), "email": user.email}
 
     return {"access_token": create_access_token(user_data)}
-    
+
 
 async def activate_user_by_token(token: str, db: AsyncSession) -> dict:
     """Activate a user account using a valid activation token.
@@ -171,7 +191,8 @@ async def activate_user_by_token(token: str, db: AsyncSession) -> dict:
         dict: A dictionary with a success message.
 
     Raises:
-        HTTPException: If the token is invalid (400), expired (400), or the user is not found (404).
+        HTTPException: If the token is invalid (400),
+            expired (400), or the user is not found (404).
     """
     # Decode and validate activation token
     try:
@@ -186,7 +207,7 @@ async def activate_user_by_token(token: str, db: AsyncSession) -> dict:
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     if user.is_active:
         return {"message": "Account already activated"}
 
@@ -208,7 +229,8 @@ async def restore_user_service(user_email: str, db: AsyncSession) -> dict:
         dict: A dictionary with a success message.
 
     Raises:
-        HTTPException: If the user is not found (404), already active (400), or recovery period has expired (403).
+        HTTPException: If the user is not found (404), already active (400),
+            or recovery period has expired (403).
     """
     # Fetch user by email
     result = await db.execute(select(User).where(User.email == user_email))
@@ -221,8 +243,12 @@ async def restore_user_service(user_email: str, db: AsyncSession) -> dict:
         raise HTTPException(status_code=400, detail="User is already active")
 
     # Check recovery period
-    if not user.deleted_at or user.deleted_at < datetime.now(timezone.utc) - timedelta(days=30):
-        raise HTTPException(status_code=403, detail="Recovery period has expired")
+    if not user.deleted_at or (
+        user.deleted_at < datetime.now(timezone.utc) - timedelta(days=30)
+    ):
+        raise HTTPException(
+            status_code=403, detail="Recovery period has expired"
+        )
 
     # Restore user
     user.is_active = True
@@ -232,7 +258,10 @@ async def restore_user_service(user_email: str, db: AsyncSession) -> dict:
 
     return {"status": "restored"}
 
-async def change_user_email_service(user: User, new_email: EmailStr, db: AsyncSession) -> dict:
+
+async def change_user_email_service(
+    user: User, new_email: EmailStr, db: AsyncSession
+) -> dict:
     """Initiate an email change and send a confirmation link to the new email.
 
     Args:
@@ -241,7 +270,8 @@ async def change_user_email_service(user: User, new_email: EmailStr, db: AsyncSe
         db (AsyncSession): The database session for querying and saving.
 
     Returns:
-        dict: A dictionary with a success message and, in debug mode, the activation link.
+        dict: A dictionary with a success message and,
+            in debug mode, the activation link.
 
     Raises:
         HTTPException: If the new email is already in use (400).
@@ -252,13 +282,15 @@ async def change_user_email_service(user: User, new_email: EmailStr, db: AsyncSe
 
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already in use")
-    
+
     # Clear previous email change requests
     await db.execute(delete(ChangeEmail).where(ChangeEmail.user_id == user.id))
 
     # Create email change token and record
     email_change_token = create_email_change_token(user.id, str(new_email))
-    email_change_link = f"https://your-frontend.com/activate?token={email_change_token}"
+    email_change_link = (
+        f"https://your-frontend.com/activate?token={email_change_token}"
+    )
 
     change_email = ChangeEmail(
         user_id=user.id,
@@ -266,7 +298,7 @@ async def change_user_email_service(user: User, new_email: EmailStr, db: AsyncSe
         token=email_change_token,
         expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
     )
-    
+
     db.add(change_email)
     await db.commit()
 
@@ -278,9 +310,13 @@ async def change_user_email_service(user: User, new_email: EmailStr, db: AsyncSe
     )
 
     return {
-        "message": "Change email adress successful. Please check your email to confirm your new email.",
+        "message": (
+            "Change email address successful. Please check your email "
+            "to confirm your new email."
+        ),
         "activation_link": email_change_link if settings.app.debug else None,
     }
+
 
 async def confirm_email_change(token: str, db: AsyncSession) -> dict:
     """Confirm an email change using a valid token.
@@ -293,10 +329,13 @@ async def confirm_email_change(token: str, db: AsyncSession) -> dict:
         dict: A dictionary with a success message.
 
     Raises:
-        HTTPException: If the token is invalid (404), expired (403), or email mismatch occurs (400).
+        HTTPException: If the token is invalid (404),
+            expired (403), or email mismatch occurs (400).
     """
     # Fetch email change record
-    result = await db.execute(select(ChangeEmail).where(ChangeEmail.token == token))
+    result = await db.execute(
+        select(ChangeEmail).where(ChangeEmail.token == token)
+    )
     change = result.scalar_one_or_none()
 
     if not change:
@@ -323,7 +362,10 @@ async def confirm_email_change(token: str, db: AsyncSession) -> dict:
 
     return {"detail": "Email successfully updated"}
 
-async def upload_photo_service(user: User, file: UploadFile, db: AsyncSession) -> dict:
+
+async def upload_photo_service(
+    user: User, file: UploadFile, db: AsyncSession
+) -> dict:
     """Upload a user's photo to MinIO and update their profile.
 
     Args:
@@ -335,24 +377,25 @@ async def upload_photo_service(user: User, file: UploadFile, db: AsyncSession) -
         dict: A dictionary containing the URL of the uploaded photo.
 
     Raises:
-        HTTPException: If no file is provided (400), file type is unsupported (400), or upload fails (500).
+        HTTPException: If no file is provided (400),
+            file type is unsupported (400), or upload fails (500).
     """
     # Validate file
     if not file:
         raise HTTPException(status_code=400, detail="No file provided")
-    
+
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=400,
             detail="Unsupported file type. Allowed: JPEG, PNG, WEBP."
         )
-    
+
     # Upload photo to MinIO
     photo_url = await upload_photo_to_minio(file, user.id)
 
     if not photo_url:
         raise HTTPException(status_code=500, detail="Failed to upload photo")
-    
+
     # Delete previous photo if not default
     if user.photo and user.photo != "user_photos/standard-photo.jpg":
         delete_photo_from_minio(user.photo)

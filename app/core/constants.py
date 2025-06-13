@@ -19,4 +19,3 @@ EMAIL_FIELDS = {
     "google": "email",
     "yandex": "default_email"
 }
-

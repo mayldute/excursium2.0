@@ -1,10 +1,12 @@
 from pydantic import BaseModel, EmailStr
 from pydantic_settings import BaseSettings
 
+
 class AppSettings(BaseModel):
     app_name: str
     debug: bool
     env: str
+
 
 class DatabaseSettings(BaseModel):
     db_login: str
@@ -14,11 +16,13 @@ class DatabaseSettings(BaseModel):
     db_name: str
     database_url: str
 
+
 class JwtSettings(BaseModel):
     jwt_secret_key: str
     jwt_algorithm: str
     jwt_access_token_expire_minutes: int
     jwt_refresh_token_expire_days: int
+
 
 class SmtpSettings(BaseModel):
     smtp_server: str
@@ -27,6 +31,7 @@ class SmtpSettings(BaseModel):
     smtp_password: str
     from_email: EmailStr
 
+
 class MinioSettings(BaseModel):
     minio_endpoint: str
     minio_access_key: str
@@ -34,15 +39,18 @@ class MinioSettings(BaseModel):
     minio_bucket_name: str
     minio_secure: bool
 
+
 class GoogleSettings(BaseModel):
     google_client_id: str
     google_client_secret: str
     google_redirect_uri: str
 
+
 class YandexSettings(BaseModel):
     yandex_client_id: str
     yandex_client_secret: str
     yandex_redirect_uri: str
+
 
 class Settings(BaseSettings):
     app: AppSettings

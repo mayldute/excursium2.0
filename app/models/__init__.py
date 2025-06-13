@@ -6,20 +6,20 @@ from .city import City
 from .docs import Docs, ExtraService
 from .newsletter import Newsletter
 from .enums import (
-    ClientTypeEnum, 
-    LegalTypeEnum, 
-    DocTypeEnum, 
-    OrderStatusEnum, 
-    PassengerTypeEnum, 
-    PaymentMethodEnum, 
-    PaymentStatusEnum, 
+    ClientTypeEnum,
+    LegalTypeEnum,
+    DocTypeEnum,
+    OrderStatusEnum,
+    PassengerTypeEnum,
+    PaymentMethodEnum,
+    PaymentStatusEnum,
     DocStatusEnum,
     ScheduleReasonEnum
 )
 from .token_state import RefreshToken, OAuthState
 
 __all__ = [
-    "User", "Client", "Carrier", "ChangeEmail",
+    "Base", "User", "Client", "Carrier", "ChangeEmail",
     "Order", "Comment", "OrderHistory",
     "Transport", "Schedule", "TransportRoute",
     "City", "Route",

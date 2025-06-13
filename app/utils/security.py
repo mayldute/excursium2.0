@@ -3,6 +3,7 @@ from passlib.context import CryptContext
 # Password hashing context using bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt.
 
@@ -36,7 +37,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
     Raises:
         UnknownHashError: If the hashed password format is invalid.
-        ValueError: If the plain password or hashed password is empty or invalid.
+        ValueError: If the plain password or hashed password is empty or
+            invalid.
     """
     # Validate inputs
     if not plain_password or not hashed_password:

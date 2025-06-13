@@ -7,8 +7,8 @@ from app.api.v1.carrier import router as carrier_router
 from app.api.v1.transport import router as transport_router
 from app.api.v1.user import router as user_router
 from app.tasks.cleanup import (
-    delete_unactivated_users, 
-    delete_deleted_users, 
+    delete_unactivated_users,
+    delete_deleted_users,
     delete_unchanged_emails,
     delete_oauth_state,
 )
@@ -24,8 +24,20 @@ app.include_router(transport_router)
 
 # Initialize and configure scheduler for background tasks
 scheduler = AsyncIOScheduler()
-scheduler.add_job(delete_oauth_state, "interval", minutes=10)      # Clean up expired OAuth states every 10 minutes
-scheduler.add_job(delete_unchanged_emails, "interval", minutes=30)  # Clean up unconfirmed email changes every 30 minutes
-scheduler.add_job(delete_unactivated_users, "interval", hours=1)    # Remove unactivated users every hour
-scheduler.add_job(delete_deleted_users, "interval", days=1)         # Delete permanently removed users daily
+# Clean up expired OAuth states every 10 minutes
+scheduler.add_job(
+    delete_oauth_state, "interval", minutes=10
+)
+# Clean up unconfirmed email changes every 30 minutes
+scheduler.add_job(
+    delete_unchanged_emails, "interval", minutes=30
+)
+# Remove unactivated users every hour
+scheduler.add_job(
+    delete_unactivated_users, "interval", hours=1
+)
+# Delete permanently removed users daily
+scheduler.add_job(
+    delete_deleted_users, "interval", days=1
+)
 scheduler.start()

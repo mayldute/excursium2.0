@@ -7,12 +7,18 @@ from sqlalchemy.future import select
 from uuid import uuid4
 
 from app.models import User, Client, OAuthState
-from app.schemas import ClientCreate, ClientUpdate, ClientResponse, CompleteRegistration
-from app.utils import( 
-    hash_password, 
-    create_activation_token, 
-    send_email, 
-    create_access_token, 
+from app.schemas import (
+    ClientCreate,
+    ClientUpdate,
+    ClientResponse,
+    CompleteRegistration
+)
+
+from app.utils import (
+    hash_password,
+    create_activation_token,
+    send_email,
+    create_access_token,
     generate_presigned_url
 )
 
@@ -20,7 +26,10 @@ from app.core.config import settings
 from app.core.oauth import oauth
 from app.core.constants import EMAIL_FIELDS
 
-async def get_owned_client_or_403(client_id: int, current_user: User, db: AsyncSession) -> Client:
+
+async def get_owned_client_or_403(
+    client_id: int, current_user: User, db: AsyncSession
+) -> Client:
     """Fetch a client by ID and verify user ownership.
 
     Args:
@@ -32,17 +41,20 @@ async def get_owned_client_or_403(client_id: int, current_user: User, db: AsyncS
         Client: The client object if found and owned by the user.
 
     Raises:
-        HTTPException: If the client is not found or the user does not have ownership (status code 403).
+        HTTPException: If the client is not found
+            or the user does not have ownership (status code 403).
     """
     client = await db.get(Client, client_id)
 
     if not client or client.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     return client
 
 
-async def register_client_service(payload: ClientCreate, db: AsyncSession) -> dict:
+async def register_client_service(
+    payload: ClientCreate, db: AsyncSession
+) -> dict:
     """Register a new client and associated user, sending an activation email.
 
     Args:
@@ -50,19 +62,23 @@ async def register_client_service(payload: ClientCreate, db: AsyncSession) -> di
         db (AsyncSession): The database session for querying and saving.
 
     Returns:
-        dict: A dictionary containing a success message and, in debug mode, the activation link.
+        dict: A dictionary containing a success message
+            and, in debug mode, the activation link.
 
     Raises:
-        HTTPException: If a user with the provided email already exists (status code 409).
+        HTTPException: If a user with the provided email
+            already exists (status code 409).
     """
     user_data = payload.user
 
     # Check for existing user with the same email
     result = await db.execute(select(User).where(User.email == user_data.email))
     existing_user = result.scalar_one_or_none()
-    
+
     if existing_user:
-        raise HTTPException(status_code=409, detail="A user with this email already exists")
+        raise HTTPException(
+            status_code=409, detail="A user with this email already exists"
+        )
 
     # Create and save the new user
     new_user = User(
@@ -76,7 +92,7 @@ async def register_client_service(payload: ClientCreate, db: AsyncSession) -> di
     )
 
     db.add(new_user)
-    await db.flush() 
+    await db.flush()
 
     # Create and save the client
     client_kwargs = {
@@ -95,7 +111,9 @@ async def register_client_service(payload: ClientCreate, db: AsyncSession) -> di
 
     # Generate and send activation email
     activation_token = create_activation_token(new_user.id)
-    activation_link = f"https://your-frontend.com/activate?token={activation_token}"
+    activation_link = (
+        f"https://your-frontend.com/activate?token={activation_token}"
+    )
 
     await send_email(
         to=new_user.email,
@@ -104,12 +122,17 @@ async def register_client_service(payload: ClientCreate, db: AsyncSession) -> di
     )
 
     return {
-        "message": "Registration successful. Please check your email to activate your account.",
+        "message": (
+            "Registration successful. "
+            "Please check your email to activate your account."
+        ),
         "activation_link": activation_link if settings.app.debug else None,
     }
 
 
-async def get_client_service(client_id: int, current_user: User, db: AsyncSession) -> ClientResponse:
+async def get_client_service(
+    client_id: int, current_user: User, db: AsyncSession
+) -> ClientResponse:
     """Retrieve a client by ID, including the user's photo URL.
 
     Args:
@@ -121,13 +144,14 @@ async def get_client_service(client_id: int, current_user: User, db: AsyncSessio
         Client: The client object with the user's photo URL.
 
     Raises:
-        HTTPException: If the client is not found, user lacks ownership (403), or user is not active (403).
+        HTTPException: If the client is not found,
+            user lacks ownership (403), or user is not active (403).
     """
     client = await get_owned_client_or_403(client_id, current_user, db)
-    
+
     if not client.user.is_active:
         raise HTTPException(status_code=403, detail="User is not active")
-    
+
     # Update user photo with a presigned URL
     photo_url = generate_presigned_url(client.user.photo)
     client.user.photo = photo_url
@@ -135,7 +159,9 @@ async def get_client_service(client_id: int, current_user: User, db: AsyncSessio
     return ClientResponse.model_validate(client)
 
 
-async def update_client_service(client_id: int, payload: ClientUpdate, current_user: User, db: AsyncSession) -> ClientResponse:
+async def update_client_service(
+    client_id: int, payload: ClientUpdate, current_user: User, db: AsyncSession
+) -> ClientResponse:
     """Update client and associated user information.
 
     Args:
@@ -148,10 +174,11 @@ async def update_client_service(client_id: int, payload: ClientUpdate, current_u
         Client: The updated client object.
 
     Raises:
-        HTTPException: If the client is not found, user lacks ownership (403), or user is not active (403).
+        HTTPException: If the client is not found,
+            user lacks ownership (403), or user is not active (403).
     """
     client = await get_owned_client_or_403(client_id, current_user, db)
-    
+
     if not client.user.is_active:
         raise HTTPException(status_code=403, detail="User is not active")
 
@@ -173,8 +200,11 @@ async def update_client_service(client_id: int, payload: ClientUpdate, current_u
     return ClientResponse.model_validate(client)
 
 
-async def delete_client_service(client_id: int, current_user: User, db:AsyncSession) -> dict:
-    """"Soft delete a client by deactivating the user and setting the deletion timestamp.
+async def delete_client_service(
+    client_id: int, current_user: User, db: AsyncSession
+) -> dict:
+    """"Soft delete a client by deactivating the user
+            and setting the deletion timestamp.
 
     Args:
         client_id (int): The ID of the client to delete.
@@ -188,11 +218,11 @@ async def delete_client_service(client_id: int, current_user: User, db:AsyncSess
         HTTPException: If the client is not found or user lacks ownership (403).
     """
     client = await get_owned_client_or_403(client_id, current_user, db)
-    
+
     # Deactivate user and mark deletion time
     client.user.is_active = False
     client.user.deleted_at = datetime.now(timezone.utc)
-    
+
     await db.flush()
     await db.commit()
 
@@ -200,7 +230,8 @@ async def delete_client_service(client_id: int, current_user: User, db:AsyncSess
 
 
 async def initiate_oauth_login(provider_name: str, db: AsyncSession) -> dict:
-    """Initiate OAuth login by generating an authorization URL for the specified provider.
+    """Initiate OAuth login by generating
+        an authorization URL for the specified provider.
 
     Args:
         provider_name (str): The OAuth provider name (e.g., 'google', 'yandex').
@@ -210,7 +241,8 @@ async def initiate_oauth_login(provider_name: str, db: AsyncSession) -> dict:
         dict: A dictionary containing the authorization URL and state.
 
     Raises:
-        HTTPException: If the provider is invalid or the authorization URL cannot be generated.
+        HTTPException: If the provider is invalid or
+            the authorization URL cannot be generated.
     """
     if provider_name not in ["google", "yandex"]:
         raise HTTPException(status_code=400, detail="Invalid OAuth provider")
@@ -221,17 +253,24 @@ async def initiate_oauth_login(provider_name: str, db: AsyncSession) -> dict:
         else settings.yandex.yandex_redirect_uri
     )
     # Define OAuth scope for user data access
-    scope = "openid email profile" if provider_name == "google" else "login:email"
+    scope = (
+        "openid email profile" if provider_name == "google" else "login:email"
+    )
 
     try:
         # Generate authorization URL with unique state
-        auth_url = await oauth.create_client(provider_name).create_authorization_url(
+        auth_url = await oauth.create_client(
+            provider_name
+        ).create_authorization_url(
             redirect_uri,
             state=str(uuid4()),
             scope=scope
         )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to generate authorization URL: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to generate authorization URL: {str(e)}"
+        )
 
     # Store state in database with 10-minute expiry
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
@@ -245,20 +284,29 @@ async def initiate_oauth_login(provider_name: str, db: AsyncSession) -> dict:
 
     return {"url": auth_url['url'], "state": auth_url['state']}
 
-async def handle_oauth_callback(provider_name: str, request: Request, state: str, db: AsyncSession) -> dict:
+
+async def handle_oauth_callback(
+    provider_name: str, request: Request, state: str, db: AsyncSession
+) -> dict:
     """Handle the callback from an OAuth provider after user authorization.
 
     Args:
         provider_name (str): The OAuth provider name (e.g., 'google', 'yandex').
-        request (Request): The incoming request containing query parameters (e.g., authorization code).
+        request (Request): The incoming request containing query parameters
+            (e.g., authorization code).
         state (str): The state parameter to verify the request.
         db (AsyncSession): The database session for querying and saving data.
 
     Returns:
-        dict: For existing users, returns {"access_token": str}. For new users, returns {"access_token": str, "requires_completion": bool}.
+        dict:
+        For existing users, returns {"access_token": str}.
+        For new users, returns
+            {"access_token": str, "requires_completion": bool}.
 
     Raises:
-        HTTPException: If the authorization code is missing, the state is invalid/expired, token exchange fails, or the account has no email.
+        HTTPException:
+        If the authorization code is missing, the state is invalid/expired,
+            token exchange fails, or the account has no email.
     """
     if provider_name not in ["google", "yandex"]:
         raise HTTPException(status_code=400, detail="Invalid OAuth provider")
@@ -266,10 +314,14 @@ async def handle_oauth_callback(provider_name: str, request: Request, state: str
     # Extract authorization code from request
     code = request.query_params.get('code')
     if not code:
-        raise HTTPException(status_code=400, detail="Authorization code is missing")
+        raise HTTPException(
+            status_code=400, detail="Authorization code is missing"
+        )
 
     # Verify the state parameter
-    state_record = await db.execute(select(OAuthState).where(OAuthState.state == state))
+    state_record = await db.execute(
+        select(OAuthState).where(OAuthState.state == state)
+    )
     state_record = state_record.scalar_one_or_none()
     if not state_record or state_record.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Invalid or expired state")
@@ -280,15 +332,28 @@ async def handle_oauth_callback(provider_name: str, request: Request, state: str
     # Configure token exchange parameters
     token_params = {
         "code": code,
-        "client_id": settings.google.google_client_id if provider_name == "google" else settings.yandex.yandex_client_id,
-        "client_secret": settings.google.google_client_secret if provider_name == "google" else settings.yandex.yandex_client_secret,
-        "redirect_uri": settings.google.google_redirect_uri if provider_name == "google" else settings.yandex.yandex_redirect_uri,
+        "client_id": (
+            settings.google.google_client_id
+            if provider_name == "google"
+            else settings.yandex.yandex_client_id
+        ),
+        "client_secret": (
+            settings.google.google_client_secret
+            if provider_name == "google"
+            else settings.yandex.yandex_client_secret
+        ),
+        "redirect_uri": (
+            settings.google.google_redirect_uri
+            if provider_name == "google"
+            else settings.yandex.yandex_redirect_uri
+        ),
         "grant_type": "authorization_code",
     }
 
     # Set provider-specific token endpoint
     token_url = (
-        "https://accounts.google.com/o/oauth2/token" if provider_name == "google"
+        "https://accounts.google.com/o/oauth2/token"
+        if provider_name == "google"
         else "https://oauth.yandex.ru/token"
     )
 
@@ -299,21 +364,36 @@ async def handle_oauth_callback(provider_name: str, request: Request, state: str
             response.raise_for_status()
             token_data = response.json()
             if "error" in token_data:
-                raise HTTPException(status_code=400, detail=token_data.get("error_description", "Failed to obtain access token"))
+                raise HTTPException(
+                    status_code=400,
+                    detail=token_data.get(
+                        "error_description",
+                        "Failed to obtain access token"
+                    )
+                )
         except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=400, detail=f"Token exchange failed: {str(e)}")
+            raise HTTPException(
+                status_code=400, detail=f"Token exchange failed: {str(e)}"
+            )
 
     # Fetch user information using the access token
     try:
-        user_info = await oauth.create_client(provider_name).userinfo(token=token_data)
+        user_info = await oauth.create_client(provider_name).userinfo(
+            token=token_data
+        )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to fetch user info: {str(e)}")
+        raise HTTPException(
+            status_code=400, detail=f"Failed to fetch user info: {str(e)}"
+        )
 
     # Extract email from provider-specific field
     email_field = EMAIL_FIELDS.get(provider_name)
     email = user_info.get(email_field)
     if not email:
-        raise HTTPException(status_code=400, detail=f"{provider_name.capitalize()} account has no email")
+        raise HTTPException(
+            status_code=400,
+            detail=f"{provider_name.capitalize()} account has no email"
+        )
 
     # Check if the user already exists
     user = await db.execute(select(User).where(User.email == email))
@@ -321,11 +401,22 @@ async def handle_oauth_callback(provider_name: str, request: Request, state: str
 
     if user:
         if not user.is_oauth_user:
-            raise HTTPException(status_code=400, detail="This email is registered locally. Please login with email and password.")
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "This email is registered locally. "
+                    "Please login with email and password."
+                )
+            )
         token = create_access_token({"sub": str(user.id)})
         return {"access_token": token}
     else:
-        new_user = User(email=email, is_active=False, is_oauth_user=True, photo="user_photos/standard-photo.jpg")
+        new_user = User(
+            email=email,
+            is_active=False,
+            is_oauth_user=True,
+            photo="user_photos/standard-photo.jpg"
+        )
         db.add(new_user)
         await db.commit()
         await db.refresh(new_user)
@@ -337,29 +428,40 @@ async def handle_oauth_callback(provider_name: str, request: Request, state: str
         token = create_access_token({"sub": str(new_user.id)})
         return {"access_token": token, "requires_completion": True}
 
-async def complete_social_registration(payload: CompleteRegistration, current_user: User, db: AsyncSession) -> dict:
-    """Complete the registration process for a user who logged in via social OAuth.
+
+async def complete_social_registration(
+    payload: CompleteRegistration, current_user: User, db: AsyncSession
+) -> dict:
+    """Complete the registration process for a user
+        who logged in via social OAuth.
 
     Args:
-        payload (CompleteRegistration): The data to update user fields (e.g., name, phone).
+        payload (CompleteRegistration):
+            The data to update user fields (e.g., name, phone).
         current_user (User): The authenticated user completing the registration.
         db (AsyncSession): The database session for querying and saving data.
 
     Returns:
-        dict: A dictionary with a success message, e.g., {"detail": "Registration completed"}.
+        dict: A dictionary with a success message,
+            e.g., {"detail": "Registration completed"}.
 
     Raises:
-        HTTPException: If the user is already active, the client is not found, or the client type is not 'IND'.
+        HTTPException: If the user is already active, the client is not found,
+            or the client type is not 'IND'.
     """
     if current_user.is_active:
         raise HTTPException(status_code=400, detail="User already activated")
 
     # Verify client exists and is of type 'IND'
-    result = await db.execute(select(Client).where(Client.user_id == current_user.id))
+    result = await db.execute(
+        select(Client).where(Client.user_id == current_user.id)
+    )
     client = result.scalar_one_or_none()
 
     if not client or client.client_type != "IND":
-        raise HTTPException(status_code=400, detail="Only IND clients can complete this step")
+        raise HTTPException(
+            status_code=400, detail="Only IND clients can complete this step"
+        )
 
     # Update user fields with provided data
     user_data = payload

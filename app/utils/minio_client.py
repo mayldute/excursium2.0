@@ -20,6 +20,7 @@ minio_client = Minio(
     secure=settings.minio.minio_secure
 )
 
+
 async def upload_file_to_minio(file: UploadFile, object_name: str) -> str:
     """Upload a file to MinIO and return the object name.
 
@@ -31,7 +32,8 @@ async def upload_file_to_minio(file: UploadFile, object_name: str) -> str:
         str: The object name in MinIO.
 
     Raises:
-        S3Error: If the upload to MinIO fails due to server issues or invalid configuration.
+        S3Error: If the upload to MinIO fails due to server issues or
+            invalid configuration.
     """
     # Read file content
     content = await file.read()
@@ -56,10 +58,12 @@ async def upload_photo_to_minio(file: UploadFile, user_id: int) -> str:
         user_id (int): The ID of the user associated with the photo.
 
     Returns:
-        str: The object name in MinIO (e.g., 'user_photos/<user_id>_<uuid>.<ext>').
+        str: The object name in MinIO
+            (e.g., 'user_photos/<user_id>_<uuid>.<ext>').
 
     Raises:
-        S3Error: If the upload to MinIO fails due to server issues or invalid configuration.
+        S3Error: If the upload to MinIO fails due to server issues or
+            invalid configuration.
         ValueError: If the file has no extension.
     """
     # Generate object name with user ID and UUID
@@ -80,10 +84,12 @@ async def upload_docs_to_minio(file: UploadFile, carrier_id: int) -> str:
         carrier_id (int): The ID of the carrier associated with the document.
 
     Returns:
-        str: The object name in MinIO (e.g., 'carrier_docs/<carrier_id>_<uuid>.<ext>').
+        str: The object name in MinIO
+            (e.g., 'carrier_docs/<carrier_id>_<uuid>.<ext>').
 
     Raises:
-        S3Error: If the upload to MinIO fails due to server issues or invalid configuration.
+        S3Error: If the upload to MinIO fails due to server issues or
+            invalid configuration.
         ValueError: If the file has no extension.
     """
     # Generate object name with carrier ID and UUID
@@ -97,7 +103,8 @@ async def upload_docs_to_minio(file: UploadFile, carrier_id: int) -> str:
 
 
 def generate_presigned_url(object_name: str) -> str:
-    """Generate a presigned URL for accessing an object in MinIO, valid for 10 minutes.
+    """Generate a presigned URL for accessing an object in MinIO,
+        valid for 10 minutes.
 
     Args:
         object_name (str): The name of the object in MinIO.
@@ -106,7 +113,8 @@ def generate_presigned_url(object_name: str) -> str:
         str: The presigned URL for accessing the object.
 
     Raises:
-        S3Error: If the URL generation fails due to server issues or invalid object name.
+        S3Error: If the URL generation fails due to server issues or
+            invalid object name.
     """
     # Generate presigned URL
     try:
@@ -120,6 +128,7 @@ def generate_presigned_url(object_name: str) -> str:
         raise
 
     return url
+
 
 def delete_photo_from_minio(object_name: str) -> None:
     """Delete an object from MinIO, logging any errors without raising them.
@@ -140,7 +149,10 @@ def delete_photo_from_minio(object_name: str) -> None:
         logger.warning(f"Error deleting photo from MinIO: {e}")
 
 
-async def upload_transport_photo_to_minio(file: UploadFile, transport_id: int) -> str:
+async def upload_transport_photo_to_minio(
+    file: UploadFile,
+    transport_id: int
+) -> str:
     """Upload a transport photo to MinIO and return the generated object name.
 
     Args:
@@ -148,10 +160,12 @@ async def upload_transport_photo_to_minio(file: UploadFile, transport_id: int) -
         transport_id (int): The ID of the transport associated with the photo.
 
     Returns:
-        str: The object name in MinIO (e.g., 'transport_photos/<user_id>_<uuid>.<ext>').
+        str: The object name in MinIO
+            (e.g., 'transport_photos/<user_id>_<uuid>.<ext>').
 
     Raises:
-        S3Error: If the upload to MinIO fails due to server issues or invalid configuration.
+        S3Error: If the upload to MinIO fails due to server issues or
+            invalid configuration.
         ValueError: If the file has no extension.
     """
     # Generate object name with user ID and UUID

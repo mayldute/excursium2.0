@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.models.transport import Route
 
+
 class City(Base):
     __tablename__ = 'cities'
 
@@ -17,5 +18,3 @@ class City(Base):
     routes_to: Mapped[list["Route"]] = relationship(
         "Route", back_populates="to_city", foreign_keys=[Route.id_to]
     )
-
-

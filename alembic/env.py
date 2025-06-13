@@ -1,4 +1,3 @@
-import os
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -6,6 +5,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+from app import models
 from app.core.config import settings
 
 config = context.config
@@ -24,7 +24,6 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from app import models
 
 target_metadata = models.Base.metadata
 # other values from the config, defined by the needs of env.py,
@@ -69,7 +68,7 @@ async def run_migrations_online() -> None:
             context.configure(
                 connection=sync_connection,
                 target_metadata=target_metadata,
-                compare_type=True, 
+                compare_type=True,
             )
             with context.begin_transaction():
                 context.run_migrations()
