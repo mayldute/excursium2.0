@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.core.config import settings
@@ -14,14 +14,13 @@ from app.tasks.cleanup import (
 )
 
 # Initialize FastAPI application
-app = FastAPI(debug=settings.app.debug)
-api_router = APIRouter(prefix="/api")
+app = FastAPI(debug=settings.app.debug, root_path="/api")
 
 # Register API routers
-api_router.include_router(client_router)
-api_router.include_router(carrier_router)
-api_router.include_router(user_router)
-api_router.include_router(transport_router)
+app.include_router(client_router)
+app.include_router(carrier_router)
+app.include_router(user_router)
+app.include_router(transport_router)
 
 # Initialize and configure scheduler for background tasks
 scheduler = AsyncIOScheduler()
